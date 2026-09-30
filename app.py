@@ -7,6 +7,12 @@ from datetime import datetime
 app = Flask(__name__)
 
 mongo_uri = os.environ.get("MONGO_URI")
+if not mongo_uri:
+    if os.environ.get("RENDER"):
+        raise RuntimeError("Configura MONGO_URI en Render.")
+    mongo_uri = "mongodb://127.0.0.1:27017/"
+
+mongo_uri = os.environ.get("MONGO_URI")
 
 if not mongo_uri:
     raise RuntimeError("MONGO_URI NO ESTA LLEGANDO A LA APLICACION")
