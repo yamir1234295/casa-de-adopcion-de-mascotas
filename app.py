@@ -64,7 +64,11 @@ def eliminar(id):
 
 @app.errorhandler(PyMongoError)
 def error_mongo(error):
-    return render_template("error.html", mensaje="No fue posible conectar con la base de datos. Revisa la configuración y vuelve a intentar."), 503
+    app.logger.exception("ERROR DE MONGODB")
+    return render_template(
+        "error.html",
+        mensaje="No fue posible conectar con la base de datos. Revisa la configuración y vuelve a intentar."
+    ), 503
 
 @app.errorhandler(400)
 @app.errorhandler(404)
