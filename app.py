@@ -12,7 +12,7 @@ if not mongo_uri:
    raise RuntimeError("Configura MONGO_URI en Render.")
 mongo_uri = "mongodb://127.0.0.1:27017/"
 
-cliente = MongoClient(mongo_uri, serverSelectionTimeoutMS=10000)
+cliente = MongoClient(mongo_uri, serverSelectionTimeoutMS=50000)
 base_datos = cliente["escuela_practica"]
 alumnos = base_datos["alumnos"]
 
