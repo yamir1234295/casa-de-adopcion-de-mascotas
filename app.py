@@ -6,17 +6,14 @@ from datetime import datetime
 import os
 
 app = Flask(__name__)
-
 mongo_uri = os.environ.get("MONGO_URI")
-
 if not mongo_uri:
-    if os.environ.get("RENDER"):
-        raise RuntimeError("Configura MONGO_URI en Render.")
-    mongo_uri = "mongodb://127.0.0.1:27017/"
-
+ if os.environ.get("RENDER"):
+  raise RuntimeError("Configura MONGO_URI en Render.")
+mongo_uri = "mongodb://127.0.0.1:27017/"
 cliente = MongoClient(mongo_uri, serverSelectionTimeoutMS=10000)
-base_datos = cliente["escuela_practica"]
-alumnos = base_datos["alumnos"]
+base_datos = cliente["casa"]
+alumnos = base_datos["perros"]
 
 
 def leer_formulario():
