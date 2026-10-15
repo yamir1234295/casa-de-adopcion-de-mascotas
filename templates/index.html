@@ -1,80 +1,96 @@
 {% extends 'base.html' %}
+{% block titulo %}Inicio | Huellitas{% endblock %}
 {% block contenido %}
-<section id="registro" class="card shadow-sm mb-4">
-  <div class="card-body p-4">
-    <h2 class="h4 mb-3">Agregar mascota</h2>
-    <form method="post" action="{{ url_for('agregar') }}"
-          class="row g-3">
-      <div class="col-md-6">
-        <label for="nombre" class="form-label">Mascota</label>
-        <input id="nombre" name="nombre" class="form-control"
-               required maxlength="80" placeholder="Ejemplo: Firulais">
+<section class="hero-section">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">ADOPTA · CUIDA · AMA</span>
+      <h1>Un hogar cambia<br><span>cuatro patitas.</span></h1>
+      <p>Encuentra a tu nuevo mejor amigo. Cada adopción es una oportunidad para comenzar una historia bonita.</p>
+      <div class="d-flex flex-wrap gap-3">
+        <a class="btn btn-coral btn-lg" href="#catalogo">Conocer mascotas <span aria-hidden="true">→</span></a>
+        <a class="btn btn-outline-light btn-lg" href="{{ url_for('ayuda') }}">¿Cómo funciona?</a>
       </div>
-      <div class="col-md-3">
-        <label for="categoria" class="form-label">Especie</label>
-        <input id="categoria" name="categoria" class="form-control"
-               required maxlength="20" placeholder="Ejemplo: Perro">
-      </div>
-      <div class="col-md-3">
-        <label for="estado" class="form-label">Estado</label>
-        <select id="estado" name="estado" class="form-select" required>
-          <option value="">Selecciona</option>
-          <option value="Disponible">Disponible</option>
-          <option value="Adoptado">Adoptado</option>
-        </select>
-      </div>
-      <div class="col-12 d-flex gap-2 flex-wrap">
-        <button type="submit" class="btn btn-success">Guardar mascota</button>
-        <button type="reset" class="btn btn-outline-secondary">
-          Limpiar formulario
-        </button>
-      </div>
-    </form>
-  </div>
-</section>
-<section id="lista" class="card shadow-sm">
-  <div class="card-body p-4">
-    <h2 class="h4 mb-3">
-      Mascotas registradas
-      <span class="badge text-bg-primary">{{ alumnos|length }}</span>
-    </h2>
-    <div class="table-responsive">
-      <table class="table table-striped table-hover align-middle">
-        <caption>Catálogo de la Casa de Adopción de Mascotas</caption>
-        <thead class="table-light">
-          <tr>
-            <th scope="col">Mascota</th><th scope="col">Especie</th>
-            <th scope="col">Estado</th><th scope="col">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for alumno in alumnos %}
-          <tr>
-            <td>{{ alumno.nombre }}</td>
-            <td>{{ alumno.categoria }}</td>
-            <td>{{ alumno.get('estado', 'Sin asignar') }}</td>
-            <td>
-              <div class="d-flex gap-2 flex-wrap">
-                <a class="btn btn-outline-primary btn-sm"
-                   href="{{ url_for('editar', id=alumno._id) }}">Editar</a>
-                <form method="post"
-                      action="{{ url_for('eliminar', id=alumno._id) }}"
-                      onsubmit="return confirm('¿Eliminar esta mascota?');">
-                  <button type="submit" class="btn btn-outline-danger btn-sm">
-                    Eliminar
-                  </button>
-                </form>
-              </div>
-            </td>
-          </tr>
-          {% else %}
-          <tr><td colspan="4" class="text-center text-secondary py-4">
-            Todavía no hay mascotas. Agrega la primera.
-          </td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="hero-note"><span>♡</span> Adopta con responsabilidad. Cambia dos vidas: la suya y la tuya.</div>
+    </div>
+    <div class="hero-art" aria-label="Ilustración de una huella de mascota">
+      <div class="sun-shape"></div><div class="pet-emoji">🐶</div>
+      <div class="floating-note note-one">Un amigo para siempre ♡</div>
+      <div class="floating-note note-two">Adopta, no compres</div>
+      <div class="paw-decoration">🐾</div>
     </div>
   </div>
 </section>
+
+<section class="benefits container">
+  <div class="benefit"><span class="benefit-icon">🏡</span><div><strong>Un hogar seguro</strong><small>Una nueva oportunidad para cada mascota.</small></div></div>
+  <div class="benefit"><span class="benefit-icon">💚</span><div><strong>Adopción responsable</strong><small>El compromiso es para toda la vida.</small></div></div>
+  <div class="benefit"><span class="benefit-icon">🐾</span><div><strong>Amor sin condiciones</strong><small>Tu compañero te espera.</small></div></div>
+</section>
+
+<section class="catalog-section" id="catalogo">
+  <div class="container">
+    <div class="section-heading">
+      <div><span class="eyebrow dark-eyebrow">CONOCE A TU COMPAÑERO</span><h2>Patitas que buscan <span>familia</span></h2><p>Estas son las mascotas registradas en nuestro catálogo.</p></div>
+      <span class="catalog-total">{{ alumnos|length }} mascota(s)</span>
+    </div>
+    <div class="row g-4">
+      {% for alumno in alumnos %}
+      <div class="col-sm-6 col-lg-4">
+        <article class="pet-card">
+          <div class="pet-picture {% if loop.index % 3 == 1 %}pet-peach{% elif loop.index % 3 == 2 %}pet-mint{% else %}pet-lilac{% endif %}">
+            <span class="pet-sticker">Busca hogar</span>
+            <span class="pet-big-emoji">{% if 'gato' in alumno.categoria|lower %}🐱{% elif 'conejo' in alumno.categoria|lower %}🐰{% elif 'perro' in alumno.categoria|lower %}🐶{% else %}🐾{% endif %}</span>
+          </div>
+          <div class="pet-card-body">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div><h3>{{ alumno.nombre }}</h3><p class="pet-species">{{ alumno.categoria }}</p></div>
+              <span class="status-pill {% if alumno.get('estado') == 'Disponible' %}status-available{% else %}status-adopted{% endif %}">{{ alumno.get('estado', 'Sin asignar') }}</span>
+            </div>
+            <p class="pet-description">{% if alumno.get('estado') == 'Disponible' %}Está esperando una familia que le dé cariño y cuidados.{% else %}¡Esta mascota ya tiene un hogar!{% endif %}</p>
+            {% if alumno.get('estado') == 'Disponible' %}
+            <button class="btn btn-pet w-100" type="button" onclick="agregarSolicitud('{{ alumno._id }}', {{ alumno.nombre|tojson }}, {{ alumno.categoria|tojson }})">♡ Me interesa adoptar</button>
+            {% else %}
+            <button class="btn btn-pet w-100" type="button" disabled>Ya fue adoptado</button>
+            {% endif %}
+            <div class="pet-admin-links"><a href="{{ url_for('editar', id=alumno._id) }}">Editar registro</a>
+              <form method="post" action="{{ url_for('eliminar', id=alumno._id) }}" onsubmit="return confirm('¿Eliminar esta mascota del registro?');"><button type="submit">Eliminar</button></form>
+            </div>
+          </div>
+        </article>
+      </div>
+      {% else %}
+      <div class="col-12"><div class="empty-state"><span>🐾</span><h3>¡Aquí empieza una nueva historia!</h3><p>Aún no hay mascotas registradas. Puedes agregar la primera desde el panel de administración.</p><a class="btn btn-coral" href="#registro">Registrar mascota</a></div></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="admin-section" id="registro">
+  <div class="container">
+    <div class="admin-panel">
+      <div class="admin-intro"><span class="eyebrow dark-eyebrow">PANEL DE ADMINISTRACIÓN</span><h2>Gestiona el <span>catálogo</span></h2><p>Agrega mascotas y mantén sus datos actualizados. Estas funciones conservan tu CRUD actual.</p><div class="admin-illustration">📝 🐕</div></div>
+      <div class="admin-form-wrap">
+        <form method="post" action="{{ url_for('agregar') }}" class="row g-3">
+          <div class="col-12"><label for="nombre" class="form-label">Nombre de la mascota</label><input id="nombre" name="nombre" class="form-control" required maxlength="80" placeholder="Ej. Luna"></div>
+          <div class="col-md-6"><label for="categoria" class="form-label">Especie</label><select id="categoria" name="categoria" class="form-select" required><option value="">Selecciona</option><option>Perro</option><option>Gato</option><option>Conejo</option><option>Otro</option></select></div>
+          <div class="col-md-6"><label for="estado" class="form-label">Estado</label><select id="estado" name="estado" class="form-select" required><option value="Disponible">Disponible</option><option value="Adoptado">Adoptado</option></select></div>
+          <div class="col-12"><button class="btn btn-coral w-100" type="submit">＋ Guardar mascota</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="toast-message" id="toastMessage" role="status" aria-live="polite"></div>
+{% endblock %}
+{% block scripts %}
+<script>
+function agregarSolicitud(id, nombre, categoria) {
+  window.huellitasCart.add({id: id, nombre: nombre, categoria: categoria});
+  var toast = document.getElementById('toastMessage');
+  toast.textContent = '♡ ' + nombre + ' se agregó a tus solicitudes de adopción.';
+  toast.classList.add('show');
+  setTimeout(function(){ toast.classList.remove('show'); }, 2600);
+}
+</script>
 {% endblock %}

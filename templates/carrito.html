@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block titulo %}Mis solicitudes | Huellitas{% endblock %}
+{% block contenido %}
+<section class="inner-hero"><div class="container"><span class="eyebrow dark-eyebrow">TU PRÓXIMO MEJOR AMIGO</span><h1>Mis solicitudes <span>♡</span></h1><p>Revisa las mascotas que te interesan. Agregarlas aquí no confirma una adopción.</p></div></section>
+<section class="container cart-section">
+  <div id="cartItems" class="cart-list"></div>
+  <aside class="cart-summary"><h2>¡Qué emoción!</h2><p>Adoptar es un compromiso de amor, tiempo y cuidados.</p><div class="summary-line"><span>Mascotas seleccionadas</span><strong id="cartTotal">0</strong></div><button class="btn btn-coral w-100" id="requestButton" type="button">Enviar interés de adopción</button><p class="summary-help">Esta versión es una demostración visual; no envía datos a un refugio.</p><a class="continue-link" href="{{ url_for('inicio') }}#catalogo">← Seguir conociendo mascotas</a></aside>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+function renderCart() {
+  var cart = window.huellitasCart.get();
+  var area = document.getElementById('cartItems');
+  document.getElementById('cartTotal').textContent = cart.length;
+  if (!cart.length) {
+    area.innerHTML = '<div class="empty-state"><span>♡</span><h2>Tu lista está vacía</h2><p>Cuando encuentres una mascota que te interese, agrégala aquí.</p><a class="btn btn-coral" href="{{ url_for('inicio') }}#catalogo">Ver mascotas</a></div>';
+    return;
+  }
+  area.innerHTML = cart.map(function(pet) {
+    var safeName = String(pet.nombre).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+    var safeCat = String(pet.categoria).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+    return '<article class="cart-item"><div class="cart-pet-icon">🐾</div><div class="cart-pet-info"><h3>'+safeName+'</h3><p>'+safeCat+' · Solicitud de interés</p></div><button class="remove-button" type="button" onclick="removePet('+JSON.stringify(pet.id)+')">Quitar</button></article>';
+  }).join('');
+}
+function removePet(id) { window.huellitasCart.remove(id); renderCart(); }
+document.getElementById('requestButton').addEventListener('click', function(){
+  if (!window.huellitasCart.get().length) { alert('Primero agrega una mascota a tu lista.'); return; }
+  alert('¡Gracias por tu interés! En esta versión de demostración, la solicitud no se envió. Contacta al refugio para continuar.');
+});
+renderCart();
+</script>
+{% endblock %}

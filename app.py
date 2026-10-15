@@ -93,6 +93,19 @@ def error_peticion(error):
     ), error.code
 
 
+@app.route("/login")
+def login():
+    # Pantalla visual de inicio de sesión. La autenticación real requiere
+    # usuarios guardados, contraseñas cifradas y manejo de sesiones.
+    return render_template("login.html")
+
+
+@app.route("/carrito")
+def carrito():
+    # El carrito de solicitudes de adopción se conserva en el navegador.
+    return render_template("carrito.html")
+
+
 @app.route("/ayuda")
 def ayuda():
     fecha = datetime.now().strftime("%d/%m/%Y")
@@ -140,4 +153,4 @@ def api_mascota(id):
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)

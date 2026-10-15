@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block titulo %}Iniciar sesión | Huellitas{% endblock %}
+{% block contenido %}
+<section class="login-page">
+  <div class="login-decoration"><span class="login-paw">🐾</span><span class="login-heart">♡</span><div><span class="eyebrow">BIENVENIDO A HUELLITAS</span><h1>El amor empieza<br>con una <span>huella.</span></h1><p>Un espacio para encontrar compañeros y ayudarles a llegar a un hogar lleno de cariño.</p></div></div>
+  <div class="login-card">
+    <a class="back-link" href="{{ url_for('inicio') }}">← Volver al inicio</a>
+    <div class="login-card-icon">🐶</div><h2>¡Hola de nuevo!</h2><p class="login-subtitle">Ingresa tus datos para continuar.</p>
+    <form id="loginForm">
+      <div class="mb-3"><label for="email" class="form-label">Correo electrónico</label><input type="email" id="email" class="form-control" placeholder="tu@correo.com" autocomplete="email" required></div>
+      <div class="mb-3"><label for="password" class="form-label">Contraseña</label><input type="password" id="password" class="form-control" placeholder="Escribe tu contraseña" autocomplete="current-password" required minlength="4"></div>
+      <div class="d-flex justify-content-between align-items-center mb-4"><label class="remember-label"><input type="checkbox"> Recordarme</label><a href="#" id="forgotLink">¿Olvidaste tu contraseña?</a></div>
+      <button class="btn btn-coral w-100" type="submit">Iniciar sesión</button>
+    </form>
+    <div class="login-notice" id="loginNotice" role="status"></div>
+    <p class="login-disclaimer">Pantalla de demostración: todavía no valida usuarios ni guarda contraseñas.</p>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', function(event) {
+  event.preventDefault();
+  document.getElementById('loginNotice').textContent = 'El diseño está listo, pero el acceso real necesita un sistema de usuarios en el servidor.';
+});
+document.getElementById('forgotLink').addEventListener('click', function(event) {
+  event.preventDefault();
+  document.getElementById('loginNotice').textContent = 'La recuperación de contraseña se debe configurar cuando se implemente el sistema de usuarios.';
+});
+</script>
+{% endblock %}
