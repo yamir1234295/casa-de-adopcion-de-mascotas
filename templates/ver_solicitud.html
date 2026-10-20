@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block titulo %}Detalle de solicitud | Huellitas{% endblock %}
+{% block contenido %}
+<section class="container py-5">
+  <a class="back-link" href="{{ url_for('solicitudes_lista') }}">← Volver a solicitudes</a>
+  <div class="request-detail mt-3">
+    <div class="d-flex justify-content-between gap-3 flex-wrap align-items-start"><div><span class="eyebrow dark-eyebrow">DETALLE</span><h1>Solicitud de {{ solicitud.nombre_solicitante }}</h1></div><span class="status-pill">{{ solicitud.estado }}</span></div>
+    <p><strong>Contacto:</strong> {{ solicitud.contacto }}</p><p><strong>Fecha:</strong> {{ solicitud.get('fecha', '—') }}</p>
+    <h2 class="h5 mt-4">Mascotas seleccionadas</h2>
+    <div class="row g-3">{% for mascota in solicitud.get('mascotas', []) %}<div class="col-sm-6 col-lg-4"><div class="request-pet">{% if mascota.get('imagen') %}<img src="{{ url_for('static', filename='uploads/' ~ mascota.imagen) }}" alt="Foto de {{ mascota.nombre }}">{% else %}<div class="detail-placeholder small-placeholder">🐾</div>{% endif %}<div><strong>{{ mascota.nombre }}</strong><p>{{ mascota.categoria }}</p></div></div></div>{% endfor %}</div>
+    {% if solicitud.get('mensaje') %}<p class="mt-4"><strong>Mensaje:</strong> {{ solicitud.mensaje }}</p>{% endif %}
+    <div class="d-flex gap-2 mt-4 flex-wrap"><a class="btn btn-coral" href="{{ url_for('editar_solicitud', id=solicitud._id) }}">Editar solicitud</a><a class="btn btn-outline-secondary" href="{{ url_for('solicitudes_lista') }}">Volver a la lista</a></div>
+  </div>
+</section>
+{% endblock %}

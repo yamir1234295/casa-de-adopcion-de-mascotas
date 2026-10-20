@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ alumno.nombre }} | Huellitas{% endblock %}
+{% block contenido %}
+<section class="container py-5">
+  <a class="back-link" href="{{ url_for('inicio') }}#catalogo">← Volver al catálogo</a>
+  <div class="detail-card mt-3">
+    <div class="detail-photo-wrap">
+      {% if alumno.get('imagen') %}<img class="detail-photo" src="{{ url_for('static', filename='uploads/' ~ alumno.imagen) }}" alt="Foto de {{ alumno.nombre }}">
+      {% else %}<div class="detail-placeholder">{% if 'gato' in alumno.categoria|lower %}🐱{% elif 'conejo' in alumno.categoria|lower %}🐰{% elif 'perro' in alumno.categoria|lower %}🐶{% else %}🐾{% endif %}</div>{% endif %}
+    </div>
+    <div class="detail-info"><span class="eyebrow dark-eyebrow">PERFIL DE MASCOTA</span><h1>{{ alumno.nombre }}</h1>
+      <p><strong>Especie:</strong> {{ alumno.categoria }}</p>
+      <p><strong>Estado:</strong> {{ alumno.get('estado', 'Sin asignar') }}</p>
+      <p>Ayúdanos a encontrarle un hogar responsable y lleno de cariño.</p>
+      <div class="d-flex gap-2 flex-wrap mt-4"><a class="btn btn-coral" href="{{ url_for('editar', id=alumno._id) }}">Editar datos y foto</a><a class="btn btn-outline-secondary" href="{{ url_for('inicio') }}#catalogo">Volver</a></div>
+    </div>
+  </div>
+</section>
+{% endblock %}

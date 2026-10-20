@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block titulo %}Solicitudes registradas | Huellitas{% endblock %}
+{% block contenido %}
+<section class="inner-hero"><div class="container"><span class="eyebrow dark-eyebrow">PANEL DE ADMINISTRACIÓN</span><h1>Solicitudes <span>registradas</span></h1><p>Aquí puedes consultar, revisar y editar las solicitudes enviadas.</p></div></section>
+<section class="container py-5">
+  {% if solicitudes %}
+  <div class="table-responsive"><table class="table align-middle requests-table"><thead><tr><th>Solicitante</th><th>Contacto</th><th>Mascotas</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>
+  {% for solicitud in solicitudes %}
+  <tr><td>{{ solicitud.nombre_solicitante }}</td><td>{{ solicitud.contacto }}</td><td>{% for mascota in solicitud.get('mascotas', []) %}{{ mascota.nombre }}{% if not loop.last %}, {% endif %}{% endfor %}</td><td><span class="status-pill {% if solicitud.estado == 'Aprobada' %}status-available{% elif solicitud.estado == 'Rechazada' %}status-adopted{% endif %}">{{ solicitud.estado }}</span></td><td>{{ solicitud.get('fecha', '—') }}</td><td><div class="d-flex gap-2 flex-wrap"><a class="btn btn-sm btn-outline-success" href="{{ url_for('ver_solicitud', id=solicitud._id) }}">Ver</a><a class="btn btn-sm btn-outline-primary" href="{{ url_for('editar_solicitud', id=solicitud._id) }}">Editar</a><form method="post" action="{{ url_for('eliminar_solicitud', id=solicitud._id) }}" onsubmit="return confirm('¿Eliminar esta solicitud?');"><button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button></form></div></td></tr>
+  {% endfor %}
+  </tbody></table></div>
+  {% else %}
+  <div class="empty-state"><span>♡</span><h2>Todavía no hay solicitudes</h2><p>Cuando alguien envíe interés por una mascota, aparecerá aquí.</p><a class="btn btn-coral" href="{{ url_for('inicio') }}#catalogo">Ver mascotas</a></div>
+  {% endif %}
+</section>
+{% endblock %}

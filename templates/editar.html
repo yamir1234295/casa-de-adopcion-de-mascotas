@@ -5,7 +5,7 @@
     <section class="card shadow-sm">
       <div class="card-body p-4">
         <h2 class="h4 mb-3">Editar mascota</h2>
-        <form method="post"
+        <form method="post" enctype="multipart/form-data"
               action="{{ url_for('editar', id=alumno._id) }}">
           <div class="mb-3">
             <label for="nombre" class="form-label">Mascota</label>
@@ -16,6 +16,12 @@
             <label for="categoria" class="form-label">Especie</label>
             <input id="categoria" name="categoria" class="form-control"
                    value="{{ alumno.categoria }}" required maxlength="20">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Foto actual</label><br>
+            {% if alumno.get('imagen') %}<img class="edit-photo mb-2" src="{{ url_for('static', filename='uploads/' ~ alumno.imagen) }}" alt="Foto actual de {{ alumno.nombre }}">{% else %}<p class="text-muted small">No hay foto registrada.</p>{% endif %}
+            <label for="imagen" class="form-label d-block">Cambiar foto (opcional)</label>
+            <input type="file" id="imagen" name="imagen" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
           </div>
           <div class="mb-3">
             <label for="estado" class="form-label">Estado</label>

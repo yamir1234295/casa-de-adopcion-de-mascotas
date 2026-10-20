@@ -23,13 +23,24 @@
         <li class="nav-item"><a class="nav-link" href="{{ url_for('inicio') }}#catalogo">Mascotas</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('inicio') }}#registro">Administrar</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('ayuda') }}">Ayuda</a></li>
-        <li class="nav-item"><a class="nav-link cart-link" href="{{ url_for('carrito') }}">♡ Solicitudes <span class="cart-count" id="cartCount">0</span></a></li>
+        <li class="nav-item"><a class="nav-link cart-link" href="{{ url_for('carrito') }}">♡ Mi lista <span class="cart-count" id="cartCount">0</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('solicitudes_lista') }}">Solicitudes registradas</a></li>
+        {% if session.get('usuario_id') %}
+        <li class="nav-item"><span class="nav-link">Hola, {{ session.get('usuario_nombre', 'Usuario') }}</span></li>
+        <li class="nav-item"><form method="post" action="{{ url_for('logout') }}"><button class="btn btn-light btn-sm login-nav" type="submit">Cerrar sesión</button></form></li>
+        {% else %}
         <li class="nav-item"><a class="btn btn-light btn-sm login-nav" href="{{ url_for('login') }}">Iniciar sesión</a></li>
+        {% endif %}
       </ul>
     </div>
   </div>
 </nav>
-<main>{% block contenido %}{% endblock %}</main>
+<main>
+{% with mensajes = get_flashed_messages(with_categories=true) %}
+  {% if mensajes %}<div class="container pt-3">{% for categoria, mensaje in mensajes %}<div class="alert alert-{{ 'success' if categoria == 'success' else 'info' }} alert-dismissible fade show" role="alert">{{ mensaje }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button></div>{% endfor %}</div>{% endif %}
+{% endwith %}
+{% block contenido %}{% endblock %}
+</main>
 <footer class="footer-huellitas">
   <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
     <span><strong>Huellitas</strong> · Cada mascota merece un hogar.</span>
