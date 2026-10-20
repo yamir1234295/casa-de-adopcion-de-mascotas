@@ -62,12 +62,12 @@
     get: getCart,
     add: function(pet) {
       var cart = getCart();
-      if (!cart.some(function(item) { return item.id === pet.id; })) cart.push(pet);
+      if (!cart.some(function(item) { return String(item.id) === String(pet.id); })) cart.push(pet);
       localStorage.setItem('huellitasCart', JSON.stringify(cart));
       updateCount();
     },
     remove: function(id) {
-      localStorage.setItem('huellitasCart', JSON.stringify(getCart().filter(function(item) { return item.id !== id; })));
+      localStorage.setItem('huellitasCart', JSON.stringify(getCart().filter(function(item) { return String(item.id) !== String(id); })));
       updateCount();
     },
     clear: function() {
