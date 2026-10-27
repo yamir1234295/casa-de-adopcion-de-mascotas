@@ -2,8 +2,8 @@ import json
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
+#BASE = "https://casa-de-adopcion-de-mascotas.onrender.com/"
 BASE = "http://127.0.0.1:5000"
-BASE = "https://casa-de-adopcion-de-mascotas.onrender.com/"
 
 
 def pedir(metodo, ruta, datos=None):
@@ -23,13 +23,13 @@ def pedir(metodo, ruta, datos=None):
 
 
 mascota = pedir("POST", "/api/mascotas", {
-    "nombre": "Prueba API", "categoria": "Perro",
+    "nombre": "la", "categoria": "Perro",
     "estado": "Disponible"
 })
 ruta = "/api/mascotas/" + mascota["id"]
 pedir("GET", ruta)
 pedir("PUT", ruta, {
-    "nombre": "Prueba API", "categoria": "Perro",
+    "nombre": "lo", "categoria": "Perro",
     "estado": "Adoptado"
 })
 pedir("GET", "/api/mascotas")
