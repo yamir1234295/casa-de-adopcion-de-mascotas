@@ -49,9 +49,9 @@
           <div class="pet-card-body">
             <div class="d-flex justify-content-between align-items-start gap-2">
               <div><h3>{{ alumno.nombre }}</h3><p class="pet-species">{{ alumno.categoria }}</p></div>
-              <span class="status-pill {% if alumno.get('estado') == 'Disponible' %}status-available{% else %}status-adopted{% endif %}">{{ alumno.get('estado', 'Sin asignar') }}</span>
+              <span class="status-pill {% if alumno.get('estado') == 'Disponible' %}status-available{% elif alumno.get('estado') == 'En proceso' %}status-adopted{% else %}status-adopted{% endif %}">{{ alumno.get('estado', 'Sin asignar') }}</span>
             </div>
-            <p class="pet-description">{% if alumno.get('estado') == 'Disponible' %}Está esperando una familia que le dé cariño y cuidados.{% else %}¡Esta mascota ya tiene un hogar!{% endif %}</p>
+            <p class="pet-description">{% if alumno.get('estado') == 'Disponible' %}Está esperando una familia que le dé cariño y cuidados.{% elif alumno.get('estado') == 'En proceso' %}Su solicitud de adopción está en revisión.{% else %}¡Esta mascota ya tiene un hogar!{% endif %}</p>
             {% if alumno.get('estado') == 'Disponible' %}
             <button class="btn btn-pet w-100 btn-agregar-carrito" type="button"
                     data-id="{{ alumno._id }}"

@@ -13,3 +13,15 @@
   </div>
 </section>
 {% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const ids = {{ session.get('carrito_confirmado_ids', [])|tojson }};
+  if (window.huellitasCart && ids.length) {
+    ids.forEach(id => window.huellitasCart.remove(id));
+    sessionStorage.setItem('huellitasSolicitudConfirmada', '1');
+  }
+})();
+</script>
+{% endblock %}

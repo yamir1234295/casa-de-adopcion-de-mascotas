@@ -13,7 +13,55 @@
       <p><strong>Estado:</strong> {{ alumno.get('estado', 'Sin asignar') }}</p>
       <p>Ayúdanos a encontrarle un hogar responsable y lleno de cariño.</p>
       <div class="d-flex gap-2 flex-wrap mt-4"><a class="btn btn-coral" href="{{ url_for('editar', id=alumno._id) }}">Editar datos y foto</a><a class="btn btn-outline-secondary" href="{{ url_for('inicio') }}#catalogo">Volver</a></div>
+      {% if alumno.estado == "Disponible" %}
+        <div class="mt-4" id="reservationPanel" data-mascota-id="{{ alumno._id }}">
+          <div id="reservationStatus" class="alert alert-info" style="display:none"></div>
+          <div id="reservationActions">
+            <form method="POST" action="{{ url_for('reservar_mascota', id=alumno._id) }}">
+              <button type="submit" class="btn btn-coral">Apartar mascota por 5 minutos</button>
+            </form>
+          </div>
+        </div>
+      {% elif alumno.estado == "En proceso" %}
+        <div class="alert alert-warning mt-4">Esta mascota tiene una solicitud en revisión.</div>
+      {% else %}
+        <div class="alert alert-secondary mt-4">Esta mascota ya fue adoptada.</div>
+      {% endif %}
     </div>
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+{% if alumno.estado == "Disponible" %}
+<script>
+(function () {
+  const panel = document.getElementById('reservationPanel');
+  if (!panel) return;
+  const id = panel.dataset.mascotaId;
+  const status = document.getElementById('reservationStatus');
+  const actions = document.getElementById('reservationActions');
+  fetch('/api/reserva/' + encodeURIComponent(id), {cache: 'no-store'})
+    .then(response => response.ok ? response.json() : {activa:false})
+    .then(data => {
+      if (!data.activa || !data.vence_en) return;
+      actions.innerHTML = '<form method="POST" action="{{ url_for("cancelar_reserva", id=alumno._id) }}"><button class="btn btn-outline-danger" type="submit">Cancelar apartado</button></form>';
+      status.style.display = 'block';
+      status.className = 'alert alert-success';
+      function actualizar() {
+        const restante = Math.max(0, new Date(data.vence_en).getTime() - Date.now());
+        const minutos = Math.floor(restante / 60000);
+        const segundos = Math.floor((restante % 60000) / 1000);
+        status.textContent = restante > 0
+          ? 'Mascota apartada para ti. Tiempo restante: ' + minutos + ':' + String(segundos).padStart(2, '0')
+          : 'El apartado venció. Actualizando disponibilidad…';
+        if (restante <= 0) { clearInterval(reloj); setTimeout(() => location.reload(), 1000); }
+      }
+      actualizar();
+      const reloj = setInterval(actualizar, 1000);
+    })
+    .catch(() => { status.style.display = 'block'; status.textContent = 'No se pudo consultar el apartado. Recarga la página.'; });
+})();
+</script>
+{% endif %}
 {% endblock %}

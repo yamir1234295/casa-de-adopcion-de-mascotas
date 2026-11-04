@@ -27,7 +27,7 @@
             <label for="estado" class="form-label">Estado</label>
             <select id="estado" name="estado" class="form-select" required>
               <option value="">Selecciona</option>
-              {% for opcion in ['Disponible', 'Adoptado'] %}
+              {% for opcion in ['Disponible', 'En proceso', 'Adoptado'] %}
               <option value="{{ opcion }}"
                 {% if alumno.get('estado') == opcion %}selected{% endif %}>
                 {{ opcion }}

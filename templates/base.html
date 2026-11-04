@@ -41,6 +41,10 @@
 {% endwith %}
 {% block contenido %}{% endblock %}
 </main>
+<div id="globalReservationTimer" class="alert alert-success shadow" role="status" aria-live="polite" style="display:none; position:fixed; z-index:1080; right:16px; bottom:16px; max-width:min(440px, calc(100vw - 32px)); max-height:45vh; overflow:auto; margin:0;">
+  <strong>⏳ Tus apartados activos</strong>
+  <div id="globalReservationTimerText" class="small mt-2"></div>
+</div>
 <footer class="footer-huellitas">
   <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
     <span><strong>Huellitas</strong> · Cada mascota merece un hogar.</span>
@@ -76,6 +80,83 @@
     }
   };
   updateCount();
+})();
+
+// Contador y cancelación global: funciona en todas las páginas.
+(function () {
+  var panel = document.getElementById('globalReservationTimer');
+  var salida = document.getElementById('globalReservationTimerText');
+  if (!panel || !salida) return;
+  var reservasActivas = [];
+  var relojGlobal = null;
+  var consultando = false;
+
+  function elemento(tag, clase, texto) {
+    var el = document.createElement(tag);
+    if (clase) el.className = clase;
+    if (texto !== undefined) el.textContent = texto;
+    return el;
+  }
+
+  function pintarContadores() {
+    var ahora = Date.now();
+    var vigentes = reservasActivas.filter(function (r) {
+      return new Date(r.vence_en).getTime() > ahora;
+    });
+    salida.replaceChildren();
+    if (!vigentes.length) {
+      panel.style.display = 'none';
+      if (relojGlobal) clearInterval(relojGlobal);
+      relojGlobal = null;
+      if (reservasActivas.length) consultarReservas();
+      return;
+    }
+    panel.style.display = 'block';
+    vigentes.forEach(function (r) {
+      var fila = elemento('div', 'd-flex align-items-center justify-content-between gap-2 border-top pt-2 mt-2');
+      var info = elemento('div', 'me-2');
+      var ms = Math.max(0, new Date(r.vence_en).getTime() - ahora);
+      var min = Math.floor(ms / 60000);
+      var seg = Math.floor((ms % 60000) / 1000);
+      info.appendChild(elemento('div', '', r.nombre || 'Mascota'));
+      info.appendChild(elemento('strong', '', 'Tiempo restante: ' + min + ':' + String(seg).padStart(2, '0')));
+      fila.appendChild(info);
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = r.cancel_url;
+      form.className = 'm-0 flex-shrink-0';
+      var next = document.createElement('input');
+      next.type = 'hidden'; next.name = 'next';
+      next.value = window.location.pathname + window.location.search;
+      form.appendChild(next);
+      var boton = elemento('button', 'btn btn-sm btn-outline-danger', 'Cancelar');
+      boton.type = 'submit';
+      form.appendChild(boton);
+      fila.appendChild(form);
+      salida.appendChild(fila);
+    });
+  }
+
+  function consultarReservas() {
+    if (consultando) return;
+    consultando = true;
+    fetch('/api/mis-reservas', {cache: 'no-store', credentials: 'same-origin', headers: {'Accept': 'application/json'}})
+      .then(function (r) { if (!r.ok) throw new Error('Error al consultar'); return r.json(); })
+      .then(function (data) {
+        reservasActivas = Array.isArray(data.reservas) ? data.reservas : [];
+        pintarContadores();
+        if (relojGlobal) clearInterval(relojGlobal);
+        relojGlobal = reservasActivas.length ? setInterval(pintarContadores, 1000) : null;
+      })
+      .catch(function () { /* Atlas conserva la reserva si hay un fallo temporal de red. */ })
+      .finally(function () { consultando = false; });
+  }
+  consultarReservas();
+  window.addEventListener('pageshow', consultarReservas);
+  window.addEventListener('focus', consultarReservas);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) consultarReservas(); });
+  // El servidor revalida y libera vencimientos aunque el usuario esté en otra página.
+  window.setInterval(consultarReservas, 15000);
 })();
 </script>
 {% block scripts %}{% endblock %}

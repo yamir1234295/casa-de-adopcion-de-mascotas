@@ -8,6 +8,9 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from uuid import uuid4
 import os
+from datetime import datetime, timedelta, timezone
+from pymongo import ReturnDocument
+import uuid
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "huellitas-clave-local-cambiar")
@@ -37,10 +40,152 @@ if not mongo_uri:
     if os.environ.get("RENDER"):
         raise RuntimeError("Configura MONGO_URI en Render.")
     mongo_uri = "mongodb://127.0.0.1:27017/"
-cliente = MongoClient(mongo_uri, serverSelectionTimeoutMS=10000)
+cliente = MongoClient(mongo_uri, serverSelectionTimeoutMS=10000, tz_aware=True)
 base_datos = cliente["casa_adopcion_de_mascotas"]
 alumnos = base_datos["perros"]
 usuarios = base_datos["usuarios"]
+reservas = base_datos["reservas"]
+
+DURACION_RESERVA_MINUTOS = 5
+
+
+def ahora_utc():
+    return datetime.now(timezone.utc)
+
+
+def obtener_reserva_id():
+    if not session.get("reserva_id"):
+        session["reserva_id"] = uuid.uuid4().hex
+
+    return session["reserva_id"]
+
+@app.route("/reservar/<id>", methods=["POST"])
+def reservar_mascota(id):
+    liberar_reservas_vencidas()
+    mascota = buscar_alumno(id)
+    visitante = obtener_reserva_id()
+    ahora = ahora_utc()
+    vence = ahora + timedelta(minutes=DURACION_RESERVA_MINUTOS)
+
+    recurso = alumnos.find_one_and_update(
+        {
+            "_id": mascota["_id"],
+            "estado": "Disponible",
+            "$or": [
+                {"reserva": {"$exists": False}},
+                {"reserva.vence_en": {"$lte": ahora}},
+                {"reserva.reserva_id": visitante}
+            ]
+        },
+        {"$set": {"reserva": {"reserva_id": visitante, "vence_en": vence}}},
+        return_document=ReturnDocument.AFTER
+    )
+    if recurso is None:
+        flash("Esta mascota ya está apartada o no está disponible.", "error")
+        return redirect(url_for("ver_mascota", id=id))
+
+    reservas.update_one(
+        {"recurso_id": mascota["_id"], "reserva_id": visitante, "estado": "activa"},
+        {"$set": {"vence_en": vence, "estado": "activa"}, "$setOnInsert": {
+            "recurso_id": mascota["_id"], "reserva_id": visitante,
+            "cantidad": 1, "creada_en": ahora
+        }},
+        upsert=True
+    )
+    flash("Mascota apartada durante 5 minutos. El contador ya está activo.", "success")
+    return redirect(url_for("ver_mascota", id=id))
+
+
+@app.route("/cancelar-reserva/<id>", methods=["POST"])
+def cancelar_reserva(id):
+    visitante = obtener_reserva_id()
+    mascota_id = ObjectId(id) if ObjectId.is_valid(id) else None
+    if mascota_id is None:
+        abort(404, description="La mascota no es válida.")
+    resultado = alumnos.update_one(
+        {"_id": mascota_id, "reserva.reserva_id": visitante},
+        {"$unset": {"reserva": ""}}
+    )
+    reservas.update_many(
+        {"reserva_id": visitante, "recurso_id": mascota_id,
+         "$or": [{"estado": "activa"}, {"estado": {"$exists": False}}]},
+        {"$set": {"estado": "cancelada", "cerrada_en": ahora_utc()}}
+    )
+    if resultado.modified_count:
+        flash("Reserva cancelada. La mascota vuelve a estar disponible.", "success")
+    else:
+        flash("No tienes una reserva activa de esta mascota.", "error")
+    destino = request.form.get("next", "")
+    if destino.startswith("/") and not destino.startswith("//"):
+        return redirect(destino)
+    return redirect(url_for("ver_mascota", id=id))
+
+
+def liberar_reservas_vencidas():
+    """Libera apartados vencidos usando como fuente la reserva de cada mascota."""
+    ahora = ahora_utc()
+    vencidas = alumnos.find(
+        {"reserva.vence_en": {"$lte": ahora}},
+        {"reserva.reserva_id": 1, "reserva.vence_en": 1}
+    )
+    for mascota in vencidas:
+        reserva = mascota.get("reserva") or {}
+        reserva_id = reserva.get("reserva_id")
+        if not reserva_id or not reserva.get("vence_en"):
+            continue
+        liberada = alumnos.update_one(
+            {"_id": mascota["_id"], "reserva.reserva_id": reserva_id,
+             "reserva.vence_en": {"$lte": ahora}},
+            {"$unset": {"reserva": ""}}
+        )
+        if liberada.modified_count:
+            reservas.update_many(
+                {"recurso_id": mascota["_id"], "reserva_id": reserva_id,
+                 "$or": [{"estado": "activa"}, {"estado": {"$exists": False}}]},
+                {"$set": {"estado": "vencida", "cerrada_en": ahora}}
+            )
+
+
+@app.route("/api/reserva/<id>")
+def api_estado_reserva(id):
+    liberar_reservas_vencidas()
+    mascota = buscar_alumno(id)
+    visitante = obtener_reserva_id()
+    reserva = mascota.get("reserva")
+    if not reserva or reserva.get("reserva_id") != visitante:
+        return jsonify({"activa": False})
+    vence = reserva.get("vence_en")
+    if not vence:
+        return jsonify({"activa": False})
+    if vence.tzinfo is None:
+        vence = vence.replace(tzinfo=timezone.utc)
+    return jsonify({"activa": True, "vence_en": vence.isoformat()})
+
+
+@app.route("/api/mis-reservas")
+def api_mis_reservas():
+    """Apartados activos del visitante para mostrar contador y cancelar desde cualquier página."""
+    liberar_reservas_vencidas()
+    visitante = obtener_reserva_id()
+    ahora = ahora_utc()
+    mascotas = alumnos.find({
+        "reserva.reserva_id": visitante,
+        "reserva.vence_en": {"$gt": ahora}
+    }, {"nombre": 1, "reserva.vence_en": 1})
+    resultado = []
+    for mascota in mascotas:
+        vence = (mascota.get("reserva") or {}).get("vence_en")
+        if not vence:
+            continue
+        if vence.tzinfo is None:
+            vence = vence.replace(tzinfo=timezone.utc)
+        resultado.append({
+            "id": str(mascota["_id"]),
+            "nombre": mascota.get("nombre", "Mascota"),
+            "vence_en": vence.isoformat(),
+            "cancel_url": url_for("cancelar_reserva", id=str(mascota["_id"]))
+        })
+    return jsonify({"reservas": resultado})
 
 
 def leer_formulario(datos=None):
@@ -56,7 +201,7 @@ def leer_formulario(datos=None):
         abort(400, description="Completa nombre, especie y estado.")
     if len(nombre) > 80 or len(categoria) > 20:
         abort(400, description="Máximo: nombre 80 y especie 20.")
-    if estado not in ["Disponible", "Adoptado"]:
+    if estado not in ["Disponible", "En proceso", "Adoptado"]:
         abort(400, description="Selecciona un estado válido.")
     return {"nombre": nombre, "categoria": categoria, "estado": estado}
 
@@ -72,6 +217,7 @@ def buscar_alumno(id):
 
 @app.route("/")
 def inicio():
+    liberar_reservas_vencidas()
     lista = list(alumnos.find().sort("nombre", 1))
     return render_template("index.html", alumnos=lista)
 
@@ -89,6 +235,7 @@ def agregar():
 
 @app.route("/mascota/<id>")
 def ver_mascota(id):
+    liberar_reservas_vencidas()
     alumno = buscar_alumno(id)
     return render_template("ver_mascota.html", alumno=alumno)
 
@@ -197,7 +344,7 @@ def logout():
 
 @app.route("/carrito")
 def carrito():
-    # El carrito de solicitudes de adopción se conserva en el navegador.
+    
     return render_template("carrito.html")
 
 
@@ -225,6 +372,7 @@ def leer_json():
 
 @app.route("/api/mascotas", methods=["GET", "POST"])
 def api_mascotas():
+    liberar_reservas_vencidas()
     if request.method == "POST":
         datos = leer_json()
         resultado = alumnos.insert_one(datos)
@@ -237,6 +385,7 @@ solicitudes = base_datos["solicitudes"]
 
 @app.route("/solicitudes")
 def solicitudes_lista():
+    liberar_reservas_vencidas()
     lista = list(solicitudes.find().sort("_id", -1))
     return render_template("solicitudes.html", solicitudes=lista)
 
@@ -244,6 +393,7 @@ def solicitudes_lista():
 @app.route("/solicitudes/agregar", methods=["POST"])
 def agregar_solicitud():
     import json
+    liberar_reservas_vencidas()
     nombre = request.form.get("nombre_solicitante", "").strip()
     contacto = request.form.get("contacto", "").strip()
     mensaje = request.form.get("mensaje", "").strip()
@@ -253,30 +403,55 @@ def agregar_solicitud():
         mascotas_carrito = []
     if not nombre or not contacto or not isinstance(mascotas_carrito, list) or not mascotas_carrito:
         abort(400, description="Completa tu nombre, contacto y selecciona al menos una mascota.")
+
+    visitante = obtener_reserva_id()
     mascotas_elegidas = []
+    ids_confirmados = []
     for item in mascotas_carrito:
         if not isinstance(item, dict) or not ObjectId.is_valid(str(item.get("id", ""))):
             continue
-        mascota = alumnos.find_one({"_id": ObjectId(str(item["id"]))})
-        if mascota and mascota.get("estado") == "Disponible":
+        mascota_id = ObjectId(str(item["id"]))
+        mascota = alumnos.find_one({
+            "_id": mascota_id, "estado": "Disponible",
+            "reserva.reserva_id": visitante,
+            "reserva.vence_en": {"$gt": ahora_utc()}
+        })
+        if mascota:
             mascotas_elegidas.append({
-                "id": str(mascota["_id"]),
-                "nombre": mascota.get("nombre", ""),
-                "categoria": mascota.get("categoria", ""),
-                "imagen": mascota.get("imagen", "")
+                "id": str(mascota["_id"]), "nombre": mascota.get("nombre", ""),
+                "categoria": mascota.get("categoria", ""), "imagen": mascota.get("imagen", "")
             })
+            ids_confirmados.append(mascota_id)
+
     if not mascotas_elegidas:
-        abort(400, description="Las mascotas seleccionadas ya no están disponibles. Actualiza la lista.")
+        abort(400, description="Primero aparta durante 5 minutos cada mascota de tu lista. Si el tiempo terminó, vuelve a apartarla.")
+    if len(mascotas_elegidas) != len(mascotas_carrito):
+        abort(400, description="Todas las mascotas de tu lista deben tener una reserva activa. Revisa cuáles necesitas apartar.")
+
+    ahora = ahora_utc()
     solicitud = {
-        "nombre_solicitante": nombre,
-        "contacto": contacto,
-        "mensaje": mensaje,
-        "mascotas": mascotas_elegidas,
-        "estado": "Pendiente",
-        "fecha": datetime.now().strftime("%d/%m/%Y %H:%M")
+        "nombre_solicitante": nombre, "contacto": contacto, "mensaje": mensaje,
+        "mascotas": mascotas_elegidas, "estado": "Pendiente",
+        "fecha": ahora.strftime("%d/%m/%Y %H:%M")
     }
     resultado = solicitudes.insert_one(solicitud)
-    flash("Solicitud enviada correctamente.", "success")
+
+    # Confirmar cierra cada reserva y bloquea la mascota mientras se revisa la solicitud.
+    for mascota_id in ids_confirmados:
+        confirmada = alumnos.update_one(
+            {"_id": mascota_id, "estado": "Disponible", "reserva.reserva_id": visitante,
+             "reserva.vence_en": {"$gt": ahora}},
+            {"$set": {"estado": "En proceso"}, "$unset": {"reserva": ""}}
+        )
+        if confirmada.modified_count:
+            reservas.update_many(
+                {"recurso_id": mascota_id, "reserva_id": visitante, "estado": "activa"},
+                {"$set": {"estado": "confirmada", "solicitud_id": resultado.inserted_id,
+                          "cerrada_en": ahora}}
+            )
+
+    session["carrito_confirmado_ids"] = [str(x) for x in ids_confirmados]
+    flash("Solicitud enviada. Las mascotas seleccionadas salieron de tu lista y quedaron en revisión.", "success")
     return redirect(url_for("ver_solicitud", id=str(resultado.inserted_id)))
 
 
