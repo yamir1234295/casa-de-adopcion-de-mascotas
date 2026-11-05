@@ -37,10 +37,15 @@ function renderCart() {
     var safeName = String(pet.nombre).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
     var safeCat = String(pet.categoria).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
     var picture = pet.imagen ? '<img class="cart-pet-photo" src="/static/uploads/'+encodeURIComponent(pet.imagen)+'" alt="Foto de '+safeName+'">' : '<div class="cart-pet-icon">🐾</div>';
-    return '<article class="cart-item">'+picture+'<div class="cart-pet-info"><h3>'+safeName+'</h3><p>'+safeCat+' · Solicitud de interés</p><a href="/mascota/'+encodeURIComponent(pet.id)+'">Ver ficha y apartar 5 min</a></div><button class="remove-button" type="button" onclick="removePet('+JSON.stringify(pet.id)+')">Quitar</button></article>';
+    return '<article class="cart-item">'+picture+'<div class="cart-pet-info"><h3>'+safeName+'</h3><p>'+safeCat+' · Solicitud de interés</p><a href="/mascota/'+encodeURIComponent(pet.id)+'">Ver ficha y apartar 5 min</a></div><button class="remove-button" type="button" data-remove-id="'+encodeURIComponent(pet.id)+'">Quitar</button></article>';
   }).join('');
 }
 function removePet(id) { window.huellitasCart.remove(id); renderCart(); }
+document.getElementById('cartItems').addEventListener('click', function(event) {
+  var boton = event.target.closest('[data-remove-id]');
+  if (!boton) return;
+  removePet(decodeURIComponent(boton.dataset.removeId));
+});
 document.getElementById('requestForm').addEventListener('submit', function(event) {
   var cart = window.huellitasCart.get();
   if (!cart.length) { event.preventDefault(); alert('Primero agrega una mascota a tu lista.'); return; }

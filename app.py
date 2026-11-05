@@ -103,7 +103,7 @@ def cancelar_reserva(id):
     if mascota_id is None:
         abort(404, description="La mascota no es válida.")
     resultado = alumnos.update_one(
-        {"_id": mascota_id, "reserva.reserva_id": visitante},
+        {"_id ": mascota_id, "reserva.reserva_id": visitante},
         {"$unset": {"reserva": ""}}
     )
     reservas.update_many(
