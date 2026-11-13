@@ -31,3 +31,6 @@
 .small-placeholder{min-height:68px;width:68px;flex-shrink:0;border-radius:10px;font-size:2rem}
 .cart-pet-photo{width:60px;height:60px;object-fit:cover;border-radius:15px;flex-shrink:0}
 @media(max-width:767px){.detail-card{grid-template-columns:1fr}.detail-photo-wrap,.detail-placeholder{min-height:230px}.detail-info h1{font-size:2rem}.requests-table{font-size:.85rem}}
+
+/* Código QR visible permanentemente en cada tarjeta de mascota */
+.pet-qr{display:flex;flex-direction:column;align-items:center;gap:7px;margin:15px 0;padding:12px;background:#f7faf7;border:1px solid #e4eee7;border-radius:14px;text-align:center}.pet-qr img{display:block;width:132px;height:132px;object-fit:contain;background:#fff;border-radius:8px}.pet-qr span{font-size:.75rem;color:var(--muted);line-height:1.4}

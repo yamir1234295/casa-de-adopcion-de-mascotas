@@ -52,6 +52,10 @@
               <span class="status-pill {% if alumno.get('estado') == 'Disponible' %}status-available{% elif alumno.get('estado') == 'En proceso' %}status-adopted{% else %}status-adopted{% endif %}">{{ alumno.get('estado', 'Sin asignar') }}</span>
             </div>
             <p class="pet-description">{% if alumno.get('estado') == 'Disponible' %}Está esperando una familia que le dé cariño y cuidados.{% elif alumno.get('estado') == 'En proceso' %}Su solicitud de adopción está en revisión.{% else %}¡Esta mascota ya tiene un hogar!{% endif %}</p>
+            <div class="pet-qr">
+              <img src="{{ url_for('imagen_qr', id=alumno._id) }}" alt="Código QR de {{ alumno.nombre }}" loading="lazy">
+              <span>Escanea para ver la ficha de {{ alumno.nombre }}</span>
+            </div>
             {% if alumno.get('estado') == 'Disponible' %}
             <button class="btn btn-pet w-100 btn-agregar-carrito" type="button"
                     data-id="{{ alumno._id }}"

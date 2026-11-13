@@ -1,5 +1,5 @@
 from flask import (Flask, render_template, request, redirect,
-                   url_for, abort, jsonify, flash, session)
+                   url_for, abort, jsonify, flash, session, send_file)
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 from bson import ObjectId
@@ -11,6 +11,9 @@ import os
 from datetime import datetime, timedelta, timezone
 from pymongo import ReturnDocument
 import uuid
+import io
+import base64
+import qrcode
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "huellitas-clave-local-cambiar")
@@ -103,7 +106,7 @@ def cancelar_reserva(id):
     if mascota_id is None:
         abort(404, description="La mascota no es válida.")
     resultado = alumnos.update_one(
-        {"_id": mascota_id, "reserva.reserva_id": visitante},
+        {"_id ": mascota_id, "reserva.reserva_id": visitante},
         {"$unset": {"reserva": ""}}
     )
     reservas.update_many(
@@ -238,6 +241,54 @@ def ver_mascota(id):
     liberar_reservas_vencidas()
     alumno = buscar_alumno(id)
     return render_template("ver_mascota.html", alumno=alumno)
+
+
+@app.route("/ficha/<id>")
+def ficha_qr(id):
+    """Ficha pública y limitada que consulta siempre el estado actual en MongoDB."""
+    liberar_reservas_vencidas()
+    alumno = buscar_alumno(id)
+    reserva = alumno.get("reserva") or {}
+    vence = reserva.get("vence_en")
+    reservada = bool(vence and vence > ahora_utc())
+    return render_template(
+        "ficha_qr.html",
+        alumno=alumno,
+        reservada=reservada
+    )
+
+
+@app.route("/qr-imagen/<id>")
+def imagen_qr(id):
+    """Devuelve la imagen PNG del QR para mostrarla directamente en cada tarjeta."""
+    alumno = buscar_alumno(id)
+    dominio = os.environ.get("APP_BASE_URL", request.url_root).rstrip("/")
+    direccion = dominio + url_for("ficha_qr", id=str(alumno["_id"]))
+
+    imagen = qrcode.make(direccion)
+    memoria = io.BytesIO()
+    imagen.save(memoria, format="PNG")
+    memoria.seek(0)
+    return send_file(memoria, mimetype="image/png", download_name=f"qr-{alumno['_id']}.png")
+
+
+@app.route("/qr/<id>")
+def mostrar_qr(id):
+    alumno = buscar_alumno(id)
+    dominio = os.environ.get("APP_BASE_URL", request.url_root).rstrip("/")
+    direccion = dominio + url_for("ficha_qr", id=str(alumno["_id"]))
+
+    imagen = qrcode.make(direccion)
+    memoria = io.BytesIO()
+    imagen.save(memoria, format="PNG")
+    qr_base64 = base64.b64encode(memoria.getvalue()).decode("utf-8")
+
+    return render_template(
+        "codigo_qr.html",
+        alumno=alumno,
+        qr=qr_base64,
+        direccion=direccion
+    )
 
 
 @app.route("/editar/<id>", methods=["GET", "POST"])
