@@ -221,7 +221,9 @@ def buscar_alumno(id):
 @app.route("/")
 def inicio():
     liberar_reservas_vencidas()
-    lista = list(alumnos.find().sort("nombre", 1))
+    # El catálogo público muestra únicamente mascotas disponibles.
+    # Las que tienen una solicitud en proceso o ya fueron adoptadas no aparecen.
+    lista = list(alumnos.find({"estado": "Disponible"}).sort("nombre", 1))
     return render_template("index.html", alumnos=lista)
 
 
@@ -429,7 +431,7 @@ def api_mascotas():
         resultado = alumnos.insert_one(datos)
         mascota = buscar_alumno(str(resultado.inserted_id))
         return jsonify(producto_json(mascota)), 201
-    lista = alumnos.find().sort("nombre", 1)
+    lista = alumnos.find({"estado": "Disponible"}).sort("nombre", 1)
     return jsonify([producto_json(m) for m in lista])
 
 solicitudes = base_datos["solicitudes"]
@@ -537,6 +539,28 @@ def editar_solicitud(id):
             "nombre_solicitante": nombre, "contacto": contacto,
             "mensaje": mensaje, "estado": estado
         }})
+
+        # Mantener sincronizado el estado de las mascotas ligadas a la solicitud.
+        ids_mascotas = [
+            ObjectId(m["id"]) for m in solicitud.get("mascotas", [])
+            if isinstance(m, dict) and ObjectId.is_valid(str(m.get("id", "")))
+        ]
+        if ids_mascotas:
+            if estado == "Aprobada":
+                alumnos.update_many(
+                    {"_id": {"$in": ids_mascotas}},
+                    {"$set": {"estado": "Adoptado"}, "$unset": {"reserva": ""}}
+                )
+            elif estado == "Rechazada":
+                alumnos.update_many(
+                    {"_id": {"$in": ids_mascotas}, "estado": "En proceso"},
+                    {"$set": {"estado": "Disponible"}}
+                )
+            elif estado in ["Pendiente", "En revisión"]:
+                alumnos.update_many(
+                    {"_id": {"$in": ids_mascotas}, "estado": {"$ne": "Adoptado"}},
+                    {"$set": {"estado": "En proceso"}, "$unset": {"reserva": ""}}
+                )
         flash("Solicitud actualizada.", "success")
         return redirect(url_for("ver_solicitud", id=id))
     return render_template("editar_solicitud.html", solicitud=solicitud)
