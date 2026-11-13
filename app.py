@@ -7,6 +7,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from uuid import uuid4
+from functools import wraps
 import os
 from datetime import datetime, timedelta, timezone
 from pymongo import ReturnDocument
@@ -48,6 +49,43 @@ base_datos = cliente["casa_adopcion_de_mascotas"]
 alumnos = base_datos["perros"]
 usuarios = base_datos["usuarios"]
 reservas = base_datos["reservas"]
+solicitudes = base_datos["solicitudes"]
+
+
+def asegurar_admin_configurado():
+    """Crea/promueve la cuenta indicada por variables de entorno, nunca desde el registro público."""
+    email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    password = os.environ.get("ADMIN_PASSWORD", "")
+    if not email or len(password) < 8:
+        return
+    usuarios.update_one(
+        {"email": email},
+        {
+            "$set": {"rol": "admin"},
+            "$setOnInsert": {
+                "nombre": os.environ.get("ADMIN_NOMBRE", "Administrador"),
+                "email": email,
+                "password_hash": generate_password_hash(password),
+                "fecha_registro": datetime.now().strftime("%d/%m/%Y %H:%M")
+            }
+        },
+        upsert=True
+    )
+
+
+def administrador_requerido(vista):
+    @wraps(vista)
+    def protegida(*args, **kwargs):
+        usuario_id = session.get("usuario_id", "")
+        if not ObjectId.is_valid(usuario_id):
+            flash("Inicia sesión con una cuenta de administrador para gestionar solicitudes.", "error")
+            return redirect(url_for("login"))
+        usuario_actual = usuarios.find_one({"_id": ObjectId(usuario_id)}, {"rol": 1})
+        if not usuario_actual or usuario_actual.get("rol") != "admin":
+            abort(403, description="No tienes permisos de administrador para gestionar solicitudes.")
+        return vista(*args, **kwargs)
+    return protegida
+
 
 DURACION_RESERVA_MINUTOS = 5
 
@@ -344,12 +382,14 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+        asegurar_admin_configurado()
         usuario = usuarios.find_one({"email": email}) if email else None
         if usuario and check_password_hash(usuario.get("password_hash", ""), password):
             session.clear()
             session["usuario_id"] = str(usuario["_id"])
             session["usuario_nombre"] = usuario.get("nombre", "Usuario")
             session["usuario_email"] = usuario["email"]
+            session["usuario_rol"] = usuario.get("rol", "usuario")
             flash("Iniciaste sesión correctamente.", "success")
             return redirect(url_for("inicio"))
         flash("Correo o contraseña incorrectos. Si aún no tienes cuenta, créala en esta página.", "error")
@@ -377,6 +417,7 @@ def registro():
         "nombre": nombre,
         "email": email,
         "password_hash": generate_password_hash(password),
+        "rol": "usuario",
         "fecha_registro": datetime.now().strftime("%d/%m/%Y %H:%M")
     }
     resultado = usuarios.insert_one(usuario)
@@ -384,6 +425,7 @@ def registro():
     session["usuario_id"] = str(resultado.inserted_id)
     session["usuario_nombre"] = nombre
     session["usuario_email"] = email
+    session["usuario_rol"] = "usuario"
     flash("Tu cuenta se creó correctamente.", "success")
     return redirect(url_for("inicio"))
 
@@ -434,9 +476,8 @@ def api_mascotas():
     lista = alumnos.find({"estado": "Disponible"}).sort("nombre", 1)
     return jsonify([producto_json(m) for m in lista])
 
-solicitudes = base_datos["solicitudes"]
-
 @app.route("/solicitudes")
+@administrador_requerido
 def solicitudes_lista():
     liberar_reservas_vencidas()
     lista = list(solicitudes.find().sort("_id", -1))
@@ -524,6 +565,7 @@ def ver_solicitud(id):
 
 
 @app.route("/solicitudes/<id>/editar", methods=["GET", "POST"])
+@administrador_requerido
 def editar_solicitud(id):
     solicitud = buscar_solicitud(id)
     if request.method == "POST":
@@ -567,6 +609,7 @@ def editar_solicitud(id):
 
 
 @app.route("/solicitudes/<id>/eliminar", methods=["POST"])
+@administrador_requerido
 def eliminar_solicitud(id):
     solicitud = buscar_solicitud(id)
     solicitudes.delete_one({"_id": solicitud["_id"]})

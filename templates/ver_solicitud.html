@@ -2,7 +2,7 @@
 {% block titulo %}Detalle de solicitud | Huellitas{% endblock %}
 {% block contenido %}
 <section class="container py-5">
-  <a class="back-link" href="{{ url_for('solicitudes_lista') }}">← Volver a solicitudes</a>
+  {% if session.get('usuario_rol') == 'admin' %}<a class="back-link" href="{{ url_for('solicitudes_lista') }}">← Volver a solicitudes</a>{% else %}<a class="back-link" href="{{ url_for('inicio') }}">← Volver al inicio</a>{% endif %}
   <div class="request-detail mt-3">
     <div class="d-flex justify-content-between gap-3 flex-wrap align-items-start"><div><span class="eyebrow dark-eyebrow">DETALLE</span><h1>Solicitud de {{ solicitud.nombre_solicitante }}</h1></div><span class="status-pill">{{ solicitud.estado }}</span></div>
     <p><strong>Contacto:</strong> {{ solicitud.contacto }}</p><p><strong>Fecha:</strong> {{ solicitud.get('fecha', '—') }}</p>
@@ -26,7 +26,9 @@
       {% endfor %}
     </div>
     {% if solicitud.get('mensaje') %}<p class="mt-4"><strong>Mensaje:</strong> {{ solicitud.mensaje }}</p>{% endif %}
+    {% if session.get('usuario_rol') == 'admin' %}
     <div class="d-flex gap-2 mt-4 flex-wrap"><a class="btn btn-coral" href="{{ url_for('editar_solicitud', id=solicitud._id) }}">Editar solicitud</a><a class="btn btn-outline-secondary" href="{{ url_for('solicitudes_lista') }}">Volver a la lista</a></div>
+    {% endif %}
   </div>
 </section>
 {% endblock %}
