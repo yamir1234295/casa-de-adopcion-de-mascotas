@@ -12,6 +12,10 @@
       <p><strong>Especie:</strong> {{ alumno.categoria }}</p>
       <p><strong>Estado:</strong> {{ alumno.get('estado', 'Sin asignar') }}</p>
       <p>Ayúdanos a encontrarle un hogar responsable y lleno de cariño.</p>
+      <div class="pet-qr mt-4">
+        <img src="{{ url_for('imagen_qr', id=alumno._id) }}" alt="Código QR de {{ alumno.nombre }}" loading="lazy">
+        <span>Escanea para consultar la ficha de {{ alumno.nombre }}</span>
+      </div>
       <div class="d-flex gap-2 flex-wrap mt-4"><a class="btn btn-coral" href="{{ url_for('editar', id=alumno._id) }}">Editar datos y foto</a><a class="btn btn-outline-secondary" href="{{ url_for('inicio') }}#catalogo">Volver</a></div>
       {% if alumno.estado == "Disponible" %}
         <div class="mt-4" id="reservationPanel" data-mascota-id="{{ alumno._id }}">

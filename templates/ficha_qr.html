@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block titulo %}Ficha pública | Huellitas{% endblock %}
+{% block contenido %}
+<section class="container py-5">
+  <div class="detail-card mt-3">
+    <div class="detail-photo-wrap">
+      {% if alumno.get('imagen') %}
+        <img class="detail-photo" src="{{ url_for('static', filename='uploads/' ~ alumno.imagen) }}" alt="Foto de {{ alumno.nombre }}">
+      {% else %}
+        <div class="detail-placeholder">{% if 'gato' in alumno.categoria|lower %}🐱{% elif 'conejo' in alumno.categoria|lower %}🐰{% elif 'perro' in alumno.categoria|lower %}🐶{% else %}🐾{% endif %}</div>
+      {% endif %}
+    </div>
+    <div class="detail-info">
+      <span class="eyebrow dark-eyebrow">FICHA PÚBLICA DE HUELLITAS</span>
+      <h1>{{ alumno.nombre }}</h1>
+      <p><strong>Especie:</strong> {{ alumno.categoria }}</p>
+      <p><strong>Estado:</strong>
+        {% if reservada %}Reservada temporalmente
+        {% else %}{{ alumno.get('estado', 'Sin asignar') }}{% endif %}
+      </p>
+      <p>Consulta la información pública y actualizada de esta mascota.</p>
+      <a class="btn btn-outline-secondary" href="{{ url_for('inicio') }}">Visitar Huellitas</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
