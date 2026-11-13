@@ -3,10 +3,10 @@ CONFIGURACIÓN DE LA CUENTA DE ADMINISTRADOR
 El proyecto usa variables de entorno para crear la cuenta de administrador de forma segura.
 Configura estas variables antes de iniciar la aplicación:
 
-ADMIN_EMAIL=correo-del-administrador
-ADMIN_PASSWORD=una-contrasena-segura-de-al-menos-8-caracteres
-ADMIN_NOMBRE=Administrador
-SECRET_KEY=una-clave-secreta-larga-y-aleatoria
+ADMIN_EMAIL=holatrabajo_24@gmail.compartas
+ADMIN_PASSWORD=noquierotrabajar12
+ADMIN_NOMBRE=1988
+SECRET_KEY=yo soyyosoy
 
 Al iniciar sesión, la aplicación crea la cuenta si todavía no existe y le asigna el rol admin.
 Si el correo ya existe, se le asigna el rol admin; su contraseña actual se conserva.
