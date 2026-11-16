@@ -6,32 +6,32 @@
   <meta name="theme-color" content="#176b57">
   <title>{% block titulo %}Huellitas | Casa de adopción{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}?v=4">
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}?v=10">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark navbar-huellitas sticky-top">
+<nav class="navbar navbar-expand-lg navbar-huellitas sticky-top">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('inicio') }}">
-      <span class="brand-icon">🐾</span><span>Huellitas <small>Casa de adopción</small></span>
+      <span class="brand-icon">🐾</span><span class="brand-wordmark">huellitas<small>ADOPCIÓN CON AMOR</small></span>
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal" aria-controls="menuPrincipal" aria-expanded="false" aria-label="Abrir menú">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="menuPrincipal">
-      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
         <li class="nav-item"><a class="nav-link" href="{{ url_for('inicio') }}">Inicio</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('inicio') }}#catalogo">Mascotas</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('inicio') }}#registro">Administrar</a></li>
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('ayuda') }}">Ayuda</a></li>
-        <li class="nav-item"><a class="nav-link cart-link" href="{{ url_for('carrito') }}">♡ Mi lista <span class="cart-count" id="cartCount">0</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('inicio') }}#catalogo">Encontrar mascota</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('ayuda') }}">Cómo adoptar</a></li>
         {% if session.get('usuario_rol') == 'admin' %}
-        <li class="nav-item"><a class="nav-link" href="{{ url_for('solicitudes_lista') }}">Gestionar solicitudes</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('inicio') }}#registro">Administrar</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('solicitudes_lista') }}">Solicitudes</a></li>
         {% endif %}
+        <li class="nav-item"><a class="nav-link cart-link" href="{{ url_for('carrito') }}"><span class="cart-heart">♡</span> Mi lista <span class="cart-count" id="cartCount">0</span></a></li>
         {% if session.get('usuario_id') %}
-        <li class="nav-item"><span class="nav-link">Hola, {{ session.get('usuario_nombre', 'Usuario') }}</span></li>
-        <li class="nav-item"><form method="post" action="{{ url_for('logout') }}"><button class="btn btn-light btn-sm login-nav" type="submit">Cerrar sesión</button></form></li>
+        <li class="nav-item"><span class="nav-link user-greeting">Hola, {{ session.get('usuario_nombre', 'Usuario') }}</span></li>
+        <li class="nav-item"><form method="post" action="{{ url_for('logout') }}"><button class="btn btn-dark-green btn-sm login-nav" type="submit">Cerrar sesión</button></form></li>
         {% else %}
-        <li class="nav-item"><a class="btn btn-light btn-sm login-nav" href="{{ url_for('login') }}">Iniciar sesión</a></li>
+        <li class="nav-item"><a class="btn btn-dark-green btn-sm login-nav" href="{{ url_for('login') }}">Iniciar sesión <span aria-hidden="true">↗</span></a></li>
         {% endif %}
       </ul>
     </div>
@@ -48,10 +48,12 @@
   <div id="globalReservationTimerText" class="small mt-2"></div>
 </div>
 <footer class="footer-huellitas">
-  <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
-    <span><strong>Huellitas</strong> · Cada mascota merece un hogar.</span>
-    <span>Proyecto escolar · Casa de Adopción de Mascotas</span>
+  <div class="container footer-main">
+    <div class="footer-brand"><span class="footer-paw">🐾</span><div><strong>huellitas</strong><small>UN HOGAR PARA CADA HISTORIA</small></div></div>
+    <p>Cada mascota merece una familia, cuidados y una segunda oportunidad.</p>
+    <a href="{{ url_for('inicio') }}#catalogo">Encuentra a tu compañero <span>↗</span></a>
   </div>
+  <div class="footer-bottom"><div class="container d-flex flex-column flex-md-row justify-content-between gap-2"><span>© Huellitas · Casa de Adopción de Mascotas</span><span>Adopta con responsabilidad. Cambia una vida.</span></div></div>
 </footer>
 <script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script>
