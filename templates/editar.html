@@ -23,18 +23,22 @@
             <label for="imagen" class="form-label d-block">Cambiar foto (opcional)</label>
             <input type="file" id="imagen" name="imagen" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
           </div>
+          {% if es_admin %}
           <div class="mb-3">
-            <label for="estado" class="form-label">Estado</label>
+            <label for="estado" class="form-label">Estado de adopción</label>
             <select id="estado" name="estado" class="form-select" required>
-              <option value="">Selecciona</option>
               {% for opcion in ['Disponible', 'En proceso', 'Adoptado'] %}
-              <option value="{{ opcion }}"
-                {% if alumno.get('estado') == opcion %}selected{% endif %}>
-                {{ opcion }}
-              </option>
+              <option value="{{ opcion }}" {% if alumno.get('estado') == opcion %}selected{% endif %}>{{ opcion }}</option>
               {% endfor %}
             </select>
           </div>
+          {% else %}
+          <div class="mb-3">
+            <label class="form-label">Estado de adopción</label>
+            <input class="form-control" value="{{ alumno.get('estado', 'Disponible') }}" disabled>
+            <div class="form-text">El estado está protegido y solo puede modificarlo el administrador.</div>
+          </div>
+          {% endif %}
           <div class="d-flex gap-2 flex-wrap">
             <button type="submit" class="btn btn-primary">
               Guardar cambios

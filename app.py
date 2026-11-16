@@ -73,16 +73,32 @@ def asegurar_admin_configurado():
     )
 
 
-def administrador_requerido(vista):
+def usuario_es_administrador():
+    """Comprueba el rol directamente en MongoDB; no confía solo en la sesión."""
+    usuario_id = session.get("usuario_id", "")
+    if not ObjectId.is_valid(usuario_id):
+        return False
+    usuario_actual = usuarios.find_one({"_id": ObjectId(usuario_id)}, {"rol": 1})
+    return bool(usuario_actual and usuario_actual.get("rol") == "admin")
+
+
+def usuario_requerido(vista):
     @wraps(vista)
     def protegida(*args, **kwargs):
         usuario_id = session.get("usuario_id", "")
-        if not ObjectId.is_valid(usuario_id):
-            flash("Inicia sesión con una cuenta de administrador para gestionar solicitudes.", "error")
+        if not ObjectId.is_valid(usuario_id) or not usuarios.find_one({"_id": ObjectId(usuario_id)}, {"_id": 1}):
+            flash("Inicia sesión para gestionar la información de las mascotas.", "error")
             return redirect(url_for("login"))
-        usuario_actual = usuarios.find_one({"_id": ObjectId(usuario_id)}, {"rol": 1})
-        if not usuario_actual or usuario_actual.get("rol") != "admin":
-            abort(403, description="No tienes permisos de administrador para gestionar solicitudes.")
+        return vista(*args, **kwargs)
+    return protegida
+
+
+def administrador_requerido(vista):
+    @wraps(vista)
+    @usuario_requerido
+    def protegida(*args, **kwargs):
+        if not usuario_es_administrador():
+            abort(403, description="Solo el administrador puede gestionar esta sección.")
         return vista(*args, **kwargs)
     return protegida
 
@@ -229,21 +245,27 @@ def api_mis_reservas():
     return jsonify({"reservas": resultado})
 
 
-def leer_formulario(datos=None):
+def leer_formulario(datos=None, estado_actual="Disponible", permitir_estado=None):
+    """Valida datos editables. Solo el administrador puede enviar/cambiar estado."""
     if datos is None:
         datos = request.form
-    campos = ("nombre", "categoria", "estado")
+    campos = ("nombre", "categoria")
     if any(not isinstance(datos.get(c, ""), str) for c in campos):
         abort(400, description="Los campos deben contener texto.")
     nombre = datos.get("nombre", "").strip()
     categoria = datos.get("categoria", "").strip()
-    estado = datos.get("estado", "").strip()
-    if not nombre or not categoria or not estado:
-        abort(400, description="Completa nombre, especie y estado.")
+    if not nombre or not categoria:
+        abort(400, description="Completa el nombre y la especie de la mascota.")
     if len(nombre) > 80 or len(categoria) > 20:
         abort(400, description="Máximo: nombre 80 y especie 20.")
-    if estado not in ["Disponible", "En proceso", "Adoptado"]:
-        abort(400, description="Selecciona un estado válido.")
+
+    if permitir_estado is None:
+        permitir_estado = usuario_es_administrador()
+    estado = estado_actual or "Disponible"
+    if permitir_estado:
+        estado = datos.get("estado", estado).strip()
+        if estado not in ["Disponible", "En proceso", "Adoptado"]:
+            abort(400, description="Selecciona un estado válido.")
     return {"nombre": nombre, "categoria": categoria, "estado": estado}
 
 
@@ -259,15 +281,20 @@ def buscar_alumno(id):
 @app.route("/")
 def inicio():
     liberar_reservas_vencidas()
-    # El catálogo público muestra únicamente mascotas disponibles.
-    # Las que tienen una solicitud en proceso o ya fueron adoptadas no aparecen.
-    lista = list(alumnos.find({"estado": "Disponible"}).sort("nombre", 1))
-    return render_template("index.html", alumnos=lista)
+    # Los visitantes ven disponibles; los usuarios registrados pueden gestionar
+    # la información de todas las mascotas. Solo el administrador cambia estados.
+    es_admin = usuario_es_administrador()
+    puede_gestionar = bool(session.get("usuario_id"))
+    filtro = {} if puede_gestionar else {"estado": "Disponible"}
+    lista = list(alumnos.find(filtro).sort("nombre", 1))
+    return render_template("index.html", alumnos=lista, es_admin=es_admin,
+                           puede_gestionar=puede_gestionar)
 
 
 @app.route("/agregar", methods=["POST"])
+@usuario_requerido
 def agregar():
-    datos = leer_formulario()
+    datos = leer_formulario(estado_actual="Disponible")
     imagen = guardar_imagen(request.files.get("imagen"))
     if imagen:
         datos["imagen"] = imagen
@@ -332,10 +359,13 @@ def mostrar_qr(id):
 
 
 @app.route("/editar/<id>", methods=["GET", "POST"])
+@usuario_requerido
 def editar(id):
     alumno = buscar_alumno(id)
+    es_admin = usuario_es_administrador()
     if request.method == "POST":
-        datos = leer_formulario()
+        datos = leer_formulario(estado_actual=alumno.get("estado", "Disponible"),
+                                permitir_estado=es_admin)
         archivo = request.files.get("imagen")
         imagen_nueva = guardar_imagen(archivo)
         if imagen_nueva:
@@ -346,10 +376,11 @@ def editar(id):
         alumnos.update_one({"_id": alumno["_id"]}, {"$set": datos})
         flash("Cambios guardados correctamente.", "success")
         return redirect(url_for("ver_mascota", id=id))
-    return render_template("editar.html", alumno=alumno)
+    return render_template("editar.html", alumno=alumno, es_admin=es_admin)
 
 
 @app.route("/eliminar/<id>", methods=["POST"])
+@usuario_requerido
 def eliminar(id):
     alumno = buscar_alumno(id)
     borrar_imagen(alumno.get("imagen"))
@@ -364,6 +395,13 @@ def error_mongo(error):
     if request.path.startswith("/api/"):
         return jsonify({"error": mensaje}), 503
     return render_template("error.html", mensaje=mensaje), 503
+
+
+@app.errorhandler(403)
+def error_permisos(error):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": error.description}), 403
+    return render_template("error.html", mensaje=error.description), 403
 
 
 @app.errorhandler(400)
@@ -458,22 +496,27 @@ def producto_json(producto):
     }
 
 
-def leer_json():
+def leer_json(estado_actual="Disponible"):
     datos = request.get_json(silent=True)
     if not isinstance(datos, dict):
         abort(400, description="Envía un objeto JSON válido.")
-    return leer_formulario(datos)
+    return leer_formulario(datos, estado_actual=estado_actual)
 
 
 @app.route("/api/mascotas", methods=["GET", "POST"])
 def api_mascotas():
     liberar_reservas_vencidas()
     if request.method == "POST":
+        if not session.get("usuario_id"):
+            abort(403, description="Inicia sesión para registrar mascotas.")
         datos = leer_json()
+        if not usuario_es_administrador():
+            datos["estado"] = "Disponible"
         resultado = alumnos.insert_one(datos)
         mascota = buscar_alumno(str(resultado.inserted_id))
         return jsonify(producto_json(mascota)), 201
-    lista = alumnos.find({"estado": "Disponible"}).sort("nombre", 1)
+    filtro = {} if usuario_es_administrador() else {"estado": "Disponible"}
+    lista = alumnos.find(filtro).sort("nombre", 1)
     return jsonify([producto_json(m) for m in lista])
 
 @app.route("/solicitudes")
@@ -620,10 +663,17 @@ def eliminar_solicitud(id):
 def api_mascota(id):
     mascota = buscar_alumno(id)
     if request.method == "PUT":
-        datos = leer_json()
+        if not session.get("usuario_id"):
+            abort(403, description="Inicia sesión para editar mascotas.")
+        datos = leer_json(estado_actual=mascota.get("estado", "Disponible"))
+        if not usuario_es_administrador():
+            datos["estado"] = mascota.get("estado", "Disponible")
         alumnos.update_one({"_id": mascota["_id"]}, {"$set": datos})
         return jsonify(producto_json(buscar_alumno(id)))
     if request.method == "DELETE":
+        if not session.get("usuario_id"):
+            abort(403, description="Inicia sesión para eliminar mascotas.")
+        borrar_imagen(mascota.get("imagen"))
         alumnos.delete_one({"_id": mascota["_id"]})
         return "", 204
     return jsonify(producto_json(mascota))
