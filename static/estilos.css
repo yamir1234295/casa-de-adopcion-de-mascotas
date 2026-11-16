@@ -1,4 +1,4 @@
-/* HUELLITAS — REDISEÑO EDITORIAL COMPLETO */
+
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
 :root{--forest:#153f35;--forest2:#205747;--leaf:#b9d7a9;--lime:#d8edbd;--coral:#f07c62;--ink:#1d302b;--muted:#718078;--paper:#f7f6f0;--white:#fff;--line:#e6e9e1;--shadow:0 22px 60px rgba(25,55,43,.10)}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:#fffefa;color:var(--ink);font-family:'DM Sans',sans-serif;letter-spacing:-.01em}h1,h2,h3,.navbar-brand{font-family:'Manrope',sans-serif}a{text-decoration:none;transition:all .2s ease}::selection{background:var(--lime);color:var(--forest)}
