@@ -4,19 +4,19 @@
 <section class="hero-section">
   <div class="container hero-grid">
     <div class="hero-copy">
-      <span class="eyebrow">ADOPTA · CUIDA · AMA</span>
-      <h1>Un hogar cambia<br><span>cuatro patitas.</span></h1>
-      <p>Encuentra a tu nuevo mejor amigo. Cada adopción es una oportunidad para comenzar una historia bonita.</p>
+      <span class="eyebrow"><i></i> ADOPTA · CUIDA · AMA</span>
+      <h1>El amor tiene<br> <span>cuatro patas.</span></h1>
+      <p>Hay una amistad esperándote. Conoce a los peluditos que buscan una familia y encuentra esa conexión que lo cambia todo.</p>
       <div class="d-flex flex-wrap gap-3">
-        <a class="btn btn-coral btn-lg" href="#catalogo">Conocer mascotas <span aria-hidden="true">→</span></a>
+        <a class="btn btn-coral btn-lg" href="#catalogo">Encuentra a tu compañero <span aria-hidden="true">↗</span></a>
         <a class="btn btn-outline-light btn-lg" href="{{ url_for('ayuda') }}">¿Cómo funciona?</a>
       </div>
-      <div class="hero-note"><span>♡</span> Adopta con responsabilidad. Cambia dos vidas: la suya y la tuya.</div>
+      <div class="hero-note"><span>✳</span> Adopta con responsabilidad. Cambia dos vidas.</div>
     </div>
     <div class="hero-art" aria-label="Ilustración de una huella de mascota">
-      <div class="sun-shape"></div><div class="pet-emoji">🐶</div>
-      <div class="floating-note note-one">Un amigo para siempre ♡</div>
-      <div class="floating-note note-two">Adopta, no compres</div>
+      <div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div><div class="sun-shape"></div><div class="pet-emoji">🐶</div><div class="hero-stamp">ADOPTA<br><b>AMOR</b><br>REAL</div>
+      <div class="floating-note note-one">Tu mejor amigo te espera ♡</div>
+      <div class="floating-note note-two">Más amor. Más huellitas.</div>
       <div class="paw-decoration">🐾</div>
     </div>
   </div>
@@ -28,10 +28,12 @@
   <div class="benefit"><span class="benefit-icon">🐾</span><div><strong>Amor sin condiciones</strong><small>Tu compañero te espera.</small></div></div>
 </section>
 
+<section class="impact-strip"><div class="container impact-grid"><div><strong>01</strong><span>Conoce historias</span></div><div><strong>02</strong><span>Encuentra conexión</span></div><div><strong>03</strong><span>Abre tu hogar</span></div><div class="impact-message">Una adopción responsable<br><b>lo cambia todo.</b></div></div></section>
+
 <section class="catalog-section" id="catalogo">
   <div class="container">
     <div class="section-heading">
-      <div><span class="eyebrow dark-eyebrow">CONOCE A TU COMPAÑERO</span><h2>Patitas que buscan <span>familia</span></h2><p>Estas son las mascotas registradas en nuestro catálogo.</p></div>
+      <div><span class="eyebrow dark-eyebrow"><i></i> CONOCE A TU COMPAÑERO</span><h2>Una nueva historia<br><span>empieza contigo.</span></h2><p>Explora las mascotas disponibles y descubre quién puede convertirse en parte de tu familia.</p></div>
       <span class="catalog-total">{{ alumnos|length }} mascota(s)</span>
     </div>
     <div class="row g-4">
@@ -39,7 +41,7 @@
       <div class="col-sm-6 col-lg-4">
         <article class="pet-card">
           <div class="pet-picture {% if loop.index % 3 == 1 %}pet-peach{% elif loop.index % 3 == 2 %}pet-mint{% else %}pet-lilac{% endif %}">
-            <span class="pet-sticker">Busca hogar</span>
+            <span class="pet-sticker">♡ Busca una familia</span>
             {% if alumno.get('imagen') %}
               <img class="pet-photo" src="{{ url_for('static', filename='uploads/' ~ alumno.imagen) }}" alt="Foto de {{ alumno.nombre }}">
             {% else %}
@@ -62,7 +64,7 @@
                     data-nombre="{{ alumno.nombre }}"
                     data-categoria="{{ alumno.categoria }}"
                     data-imagen="{{ alumno.get('imagen', '') }}">
-              ♡ Me interesa adoptar
+              Me interesa <span aria-hidden="true">→</span>
             </button>
             {% else %}
             <button class="btn btn-pet w-100" type="button" disabled>Ya fue adoptado</button>
@@ -85,7 +87,7 @@
 <section class="admin-section" id="registro">
   <div class="container">
     <div class="admin-panel">
-      <div class="admin-intro"><span class="eyebrow dark-eyebrow">PANEL DE ADMINISTRACIÓN</span><h2>Gestiona el <span>catálogo</span></h2><p>Agrega mascotas y mantén sus datos actualizados. Estas funciones conservan tu CRUD actual.</p><div class="admin-illustration">📝 🐕</div></div>
+      <div class="admin-intro"><span class="eyebrow dark-eyebrow"><i></i> ESPACIO DE GESTIÓN</span><h2>Cuida cada detalle<br><span>de su historia.</span></h2><p>Agrega mascotas y mantén sus datos actualizados. Estas funciones conservan tu CRUD actual.</p><div class="admin-illustration">📝 🐕</div></div>
       <div class="admin-form-wrap">
         <form method="post" enctype="multipart/form-data" action="{{ url_for('agregar') }}" class="row g-3">
           <div class="col-12"><label for="nombre" class="form-label">Nombre de la mascota</label><input id="nombre" name="nombre" class="form-control" required maxlength="80" placeholder="Ej. Luna"></div>
