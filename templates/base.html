@@ -86,7 +86,7 @@
   updateCount();
 })();
 
-// Contador y cancelación global: funciona en todas las páginas.
+
 (function () {
   var panel = document.getElementById('globalReservationTimer');
   var salida = document.getElementById('globalReservationTimerText');
@@ -152,14 +152,14 @@
         if (relojGlobal) clearInterval(relojGlobal);
         relojGlobal = reservasActivas.length ? setInterval(pintarContadores, 1000) : null;
       })
-      .catch(function () { /* Atlas conserva la reserva si hay un fallo temporal de red. */ })
+      .catch(function () {  })
       .finally(function () { consultando = false; });
   }
   consultarReservas();
   window.addEventListener('pageshow', consultarReservas);
   window.addEventListener('focus', consultarReservas);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) consultarReservas(); });
-  // El servidor revalida y libera vencimientos aunque el usuario esté en otra página.
+  
   window.setInterval(consultarReservas, 15000);
 })();
 </script>
