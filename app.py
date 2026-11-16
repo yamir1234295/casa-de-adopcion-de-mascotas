@@ -160,7 +160,7 @@ def cancelar_reserva(id):
     if mascota_id is None:
         abort(404, description="La mascota no es válida.")
     resultado = alumnos.update_one(
-        {"_id ": mascota_id, "reserva.reserva_id": visitante},
+        {"_id": mascota_id, "reserva.reserva_id": visitante},
         {"$unset": {"reserva": ""}}
     )
     reservas.update_many(
@@ -281,9 +281,7 @@ def buscar_alumno(id):
 @app.route("/")
 def inicio():
     liberar_reservas_vencidas()
-    # El catálogo público y el de usuarios normales muestra únicamente mascotas
-    # disponibles. Así, las que están En proceso o Adoptado desaparecen del catálogo.
-    # El administrador conserva la vista completa para gestionar los registros.
+
     es_admin = usuario_es_administrador()
     puede_gestionar = bool(session.get("usuario_id"))
     filtro = {} if es_admin else {"estado": "Disponible"}
