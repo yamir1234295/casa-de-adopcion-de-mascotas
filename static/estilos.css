@@ -34,3 +34,269 @@
 
 /* Código QR visible permanentemente en cada tarjeta de mascota */
 .pet-qr{display:flex;flex-direction:column;align-items:center;gap:7px;margin:15px 0;padding:12px;background:#f7faf7;border:1px solid #e4eee7;border-radius:14px;text-align:center}.pet-qr img{display:block;width:132px;height:132px;object-fit:contain;background:#fff;border-radius:8px}.pet-qr span{font-size:.75rem;color:var(--muted);line-height:1.4}
+
+
+/* =========================================================
+   Rediseño visual Huellitas — estilo cálido, limpio y moderno
+   Mantiene intactas las rutas, formularios y funciones.
+   ========================================================= */
+:root{
+  --green:#245b4b;
+  --green-dark:#173f35;
+  --mint:#e7f1e9;
+  --coral:#df8067;
+  --ink:#243a32;
+  --muted:#718078;
+  --cream:#fbf8f1;
+  --line:#e7e9e1;
+  --surface:#ffffff;
+  --shadow-soft:0 12px 34px rgba(34,69,53,.08);
+  --shadow-card:0 16px 38px rgba(34,69,53,.11);
+}
+body{
+  background:#fffefa;
+  color:var(--ink);
+  letter-spacing:.005em;
+}
+::selection{background:#dcece0;color:var(--green-dark)}
+a{transition:color .18s ease,opacity .18s ease}
+a:hover{color:var(--coral)}
+.navbar-huellitas{
+  background:rgba(29,78,63,.97);
+  backdrop-filter:blur(14px);
+  padding:11px 0;
+  box-shadow:0 8px 28px rgba(18,54,42,.14);
+}
+.navbar-brand{font-size:1.28rem;letter-spacing:-.7px}
+.brand-icon{
+  width:45px;height:45px;border:1px solid rgba(255,255,255,.16);
+  border-radius:15px;background:rgba(255,255,255,.12);
+}
+.navbar-nav .nav-link{
+  padding:.65rem .8rem!important;
+  border-radius:10px;
+  transition:background .18s ease,color .18s ease;
+}
+.navbar-nav .nav-link:hover{background:rgba(255,255,255,.11)}
+.login-nav{box-shadow:0 5px 15px rgba(8,38,28,.12)}
+.hero-section{
+  background:
+    radial-gradient(circle at 82% 22%,rgba(244,190,159,.2),transparent 26%),
+    radial-gradient(circle at 8% 92%,rgba(150,199,169,.17),transparent 32%),
+    linear-gradient(125deg,#1c4d3f 0%,#286b55 58%,#34765f 100%);
+}
+.hero-grid{min-height:510px;padding-top:72px;padding-bottom:76px}
+.eyebrow{letter-spacing:2.2px;font-size:.7rem}
+.hero-copy h1{
+  font-size:clamp(2.8rem,5.2vw,4.65rem);
+  letter-spacing:-3.2px;
+  text-wrap:balance;
+}
+.hero-copy>p{font-size:1.04rem;max-width:490px}
+.hero-art{isolation:isolate}
+.sun-shape{
+  width:min(350px,78%);
+  background:linear-gradient(145deg,#f6c8ad,#f2a98f);
+  box-shadow:0 28px 70px rgba(11,45,33,.18);
+}
+.pet-emoji{filter:drop-shadow(0 22px 9px rgba(17,55,40,.22))}
+.floating-note{
+  border:1px solid rgba(255,255,255,.65);
+  border-radius:16px;
+  box-shadow:0 16px 36px rgba(12,43,32,.18);
+}
+.btn{
+  border-radius:13px;
+  padding:11px 19px;
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.btn:hover{transform:translateY(-2px)}
+.btn:focus-visible,.nav-link:focus-visible,a:focus-visible,
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:3px solid rgba(223,128,103,.48);
+  outline-offset:3px;
+}
+.btn-coral{
+  background:linear-gradient(135deg,#e58a70,#d9765d);
+  border-color:#dc8067;
+  box-shadow:0 9px 20px rgba(194,94,69,.2);
+}
+.btn-coral:hover{
+  background:linear-gradient(135deg,#d97960,#c96851);
+  border-color:#c96851;
+  box-shadow:0 12px 24px rgba(194,94,69,.26);
+}
+.benefits{padding-top:34px;padding-bottom:34px}
+.benefit{
+  padding:14px 16px;
+  border:1px solid #edf0e9;
+  border-radius:18px;
+  background:rgba(255,255,255,.8);
+  box-shadow:0 5px 18px rgba(35,71,54,.035);
+}
+.benefit-icon{
+  width:52px;height:52px;border-radius:17px;
+  background:linear-gradient(145deg,#eaf3e9,#dcebe0);
+}
+.catalog-section{
+  background:
+    radial-gradient(circle at 100% 0%,rgba(228,239,225,.55),transparent 25%),
+    var(--cream);
+  padding:82px 0 88px;
+}
+.section-heading{margin-bottom:38px}
+.section-heading h2,.admin-intro h2{letter-spacing:-1.6px}
+.catalog-total{
+  border-color:#dce6dc;
+  box-shadow:0 4px 14px rgba(34,69,53,.04);
+}
+.pet-card{
+  border:1px solid #e9ede6;
+  border-radius:23px;
+  box-shadow:0 8px 24px rgba(35,71,54,.055);
+}
+.pet-card:hover{
+  transform:translateY(-6px);
+  box-shadow:var(--shadow-card);
+  border-color:#d9e6da;
+}
+.pet-picture{height:220px}
+.pet-sticker{
+  left:16px;top:16px;
+  box-shadow:0 5px 15px rgba(31,62,47,.08);
+  backdrop-filter:blur(8px);
+}
+.pet-card-body{padding:23px}
+.pet-card h3{letter-spacing:-.45px}
+.status-pill{letter-spacing:.02em;padding:7px 11px}
+.btn-pet{
+  border-radius:12px;
+  background:#edf5ed;
+  border-color:#dceadd;
+}
+.empty-state{
+  border:1px dashed #c8d9cb;
+  background:linear-gradient(145deg,#fff,#fbfdf9);
+  box-shadow:var(--shadow-soft);
+  padding:58px 22px;
+}
+.admin-section{padding:84px 0}
+.admin-panel{
+  background:linear-gradient(135deg,#f1f7ef,#eaf3eb);
+  border:1px solid #e3ece2;
+  border-radius:30px;
+  box-shadow:var(--shadow-soft);
+}
+.admin-form-wrap{
+  border:1px solid rgba(222,233,222,.85);
+  border-radius:22px;
+  box-shadow:0 16px 36px rgba(30,67,48,.08);
+}
+.form-label{margin-bottom:.5rem}
+.form-control,.form-select{
+  min-height:47px;
+  border-color:#dfe7dd;
+  border-radius:12px;
+  background-color:#fff;
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+textarea.form-control{min-height:unset}
+.form-control:focus,.form-select:focus{
+  border-color:#77a88e;
+  box-shadow:0 0 0 .22rem rgba(36,91,75,.12);
+}
+.inner-hero{
+  background:
+    radial-gradient(circle at 90% 15%,rgba(231,241,233,.95),transparent 30%),
+    linear-gradient(135deg,#fbf8f1,#f5f6ee);
+  padding:66px 0 54px;
+  border-bottom:1px solid #edf0e8;
+}
+.inner-hero h1{letter-spacing:-1.8px}
+.cart-item,.request-pet{
+  border-color:#e8ece5;
+  border-radius:18px;
+  box-shadow:0 6px 18px rgba(35,71,54,.035);
+}
+.cart-item{padding:20px}
+.cart-summary{
+  background:linear-gradient(145deg,#f6f7ef,#edf4ec);
+  border:1px solid #e4ebdf;
+  border-radius:22px;
+}
+.login-page{background:#fbfcf8}
+.login-decoration{
+  background:
+    radial-gradient(circle at 90% 15%,rgba(240,177,147,.2),transparent 28%),
+    linear-gradient(145deg,#1b4b3d,#2d7057);
+}
+.login-card{
+  padding:48px 42px;
+  background:#fff;
+  border:1px solid #edf0e9;
+  border-radius:25px;
+  box-shadow:var(--shadow-soft);
+  margin:35px 20px;
+}
+.login-card-icon{
+  border-radius:18px;
+  background:linear-gradient(145deg,#eaf3e9,#dcebe0);
+}
+.detail-card{
+  background:linear-gradient(145deg,#f5f8f2,#edf4ed);
+  border:1px solid #e5ede3;
+  border-radius:28px;
+  box-shadow:var(--shadow-soft);
+}
+.detail-photo-wrap{border-radius:22px}
+.request-detail,.edit-request-card{
+  background:#fff;
+  border:1px solid #e8ede5;
+  border-radius:23px;
+  box-shadow:var(--shadow-soft);
+}
+.requests-table{
+  border:1px solid #e7ece5;
+  box-shadow:var(--shadow-soft);
+}
+.requests-table thead th{
+  background:#edf4ec;
+  color:#245b4b;
+  font-size:.82rem;
+  letter-spacing:.025em;
+  padding:15px 13px;
+}
+.requests-table td{padding:14px 13px;vertical-align:middle}
+.footer-huellitas{
+  background:linear-gradient(115deg,#153e33,#1d5141);
+  padding:30px 0;
+}
+#globalReservationTimer{
+  border:1px solid #cfe4d4;
+  border-radius:16px;
+  box-shadow:0 14px 36px rgba(24,69,47,.18)!important;
+}
+.alert{border-radius:13px}
+.pet-qr{
+  border-color:#e7ede5;
+  background:#fafcf8;
+  border-radius:16px;
+}
+@media(max-width:991px){
+  .navbar-nav .nav-link{padding:.65rem .75rem!important}
+  .login-card{padding:38px 28px}
+}
+@media(max-width:767px){
+  .hero-grid{padding-top:54px;padding-bottom:40px}
+  .hero-copy h1{letter-spacing:-2px;font-size:clamp(2.55rem,11vw,3.35rem)}
+  .catalog-section,.admin-section{padding:58px 0}
+  .benefit{background:#fff}
+  .pet-picture{height:205px}
+  .login-card{width:calc(100% - 30px);padding:30px 22px;margin:20px 15px}
+  .inner-hero{padding:48px 0 38px}
+  .requests-table{font-size:.82rem}
+  .requests-table td{padding:11px 9px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
