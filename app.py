@@ -281,9 +281,11 @@ def buscar_alumno(id):
 @app.route("/")
 def inicio():
     liberar_reservas_vencidas()
-
+    # Los visitantes ven disponibles; los usuarios registrados pueden gestionar
+    # la información de todas las mascotas. Solo el administrador cambia estados.
     es_admin = usuario_es_administrador()
     puede_gestionar = bool(session.get("usuario_id"))
+    # Solo el administrador ve las mascotas en proceso o adoptadas.
     filtro = {} if es_admin else {"estado": "Disponible"}
     lista = list(alumnos.find(filtro).sort("nombre", 1))
     return render_template("index.html", alumnos=lista, es_admin=es_admin,
@@ -603,7 +605,8 @@ def buscar_solicitud(id):
 @app.route("/solicitudes/<id>")
 def ver_solicitud(id):
     solicitud = buscar_solicitud(id)
-    return render_template("ver_solicitud.html", solicitud=solicitud)
+    ids_confirmados = session.pop("carrito_confirmado_ids", [])
+    return render_template("ver_solicitud.html", solicitud=solicitud, ids_confirmados=ids_confirmados)
 
 
 @app.route("/solicitudes/<id>/editar", methods=["GET", "POST"])

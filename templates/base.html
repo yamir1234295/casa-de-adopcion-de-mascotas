@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#176b57">
   <title>{% block titulo %}Huellitas | Casa de adopción{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}?v=11">
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}?v=14">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-huellitas sticky-top">
@@ -39,11 +39,11 @@
 </nav>
 <main>
 {% with mensajes = get_flashed_messages(with_categories=true) %}
-  {% if mensajes %}<div class="container pt-3">{% for categoria, mensaje in mensajes %}<div class="alert alert-{{ 'success' if categoria == 'success' else 'info' }} alert-dismissible fade show" role="alert">{{ mensaje }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button></div>{% endfor %}</div>{% endif %}
+  {% if mensajes %}<div class="container pt-3">{% for categoria, mensaje in mensajes %}<div class="alert alert-{{ 'success' if categoria == 'success' else ('danger' if categoria == 'error' else 'info') }} alert-dismissible fade show" role="alert">{{ mensaje }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button></div>{% endfor %}</div>{% endif %}
 {% endwith %}
 {% block contenido %}{% endblock %}
 </main>
-<div id="globalReservationTimer" class="alert alert-success shadow" role="status" aria-live="polite" style="display:none; position:fixed; z-index:1080; right:16px; bottom:16px; max-width:min(440px, calc(100vw - 32px)); max-height:45vh; overflow:auto; margin:0;">
+<div id="globalReservationTimer" class="reserve-toast" role="status" aria-live="polite" style="display:none">
   <strong>⏳ Tus apartados activos</strong>
   <div id="globalReservationTimerText" class="small mt-2"></div>
 </div>
@@ -159,8 +159,33 @@
   window.addEventListener('pageshow', consultarReservas);
   window.addEventListener('focus', consultarReservas);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) consultarReservas(); });
-
+  // El servidor revalida y libera vencimientos aunque el usuario esté en otra página.
   window.setInterval(consultarReservas, 15000);
+})();
+</script>
+<script>
+// "Volver": regresa a la página desde la que se llegó (misma pestaña/sección); si no se conoce, usa el enlace original.
+(function () {
+  var clave = 'huellitasVolver:' + location.pathname;
+  try {
+    if (document.referrer) {
+      var ref = new URL(document.referrer);
+      if (ref.origin === location.origin && ref.pathname !== location.pathname) {
+        sessionStorage.setItem(clave, ref.pathname + ref.search + ref.hash);
+      }
+    }
+  } catch (e) {}
+  document.addEventListener('click', function (ev) {
+    var enlace = ev.target.closest('a.js-volver');
+    if (!enlace) return;
+    try {
+      var destino = sessionStorage.getItem(clave);
+      if (destino && destino.charAt(0) === '/' && destino.charAt(1) !== '/') {
+        ev.preventDefault();
+        location.href = destino;
+      }
+    } catch (e) {}
+  });
 })();
 </script>
 {% block scripts %}{% endblock %}

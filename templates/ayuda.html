@@ -1,22 +1,21 @@
 {% extends 'base.html' %}
+{% block titulo %}Cómo adoptar | Huellitas{% endblock %}
 {% block contenido %}
-<section class="card shadow-sm">
-  <div class="card-body p-4">
-    <h2 class="h4">Ayuda de la Casa de Adopción de Mascotas</h2>
-    <p class="text-secondary">Fecha del equipo: {{ fecha }}</p>
-    <div class="alert alert-info" role="note">
-      Utiliza datos ficticios durante la práctica.
-    </div>
-    <ol class="mb-4">
-      <li>En Agregar mascota, escribe el nombre, la especie y selecciona el estado.</li>
-      <li>Presiona Guardar mascota y consulta la lista.</li>
-      <li>Usa Editar para corregir los datos de una mascota.</li>
-      <li>Usa Eliminar solo con tus registros de prueba.</li>
-      <li>En pantalla pequeña, abre el menú con su botón.</li>
+<section class="page-wrap container">
+  <div class="page-card">
+    <div class="page-icon">🐾</div>
+    <span class="eyebrow dark-eyebrow"><i></i> GUÍA PASO A PASO</span>
+    <h1>Cómo adoptar <span>en Huellitas</span></h1>
+    <p class="page-lead">Adoptar es sencillo y tiene un solo objetivo: encontrar el hogar ideal para cada mascota.</p>
+    <ol class="steps">
+      <li><div><b>Conoce a las mascotas.</b> Explora el catálogo y abre la ficha de quien te llame la atención.</div></li>
+      <li><div><b>Agrégala a tu lista.</b> Pulsa «Me interesa» para guardar a tus favoritas.</div></li>
+      <li><div><b>Apártala 5 minutos.</b> En su ficha, aparta a la mascota mientras terminas tu solicitud.</div></li>
+      <li><div><b>Envía tus datos.</b> Completa tu solicitud en «Mi lista» y nuestro equipo te contactará.</div></li>
+      <li><div><b>Cuenta con nosotros.</b> En pantalla pequeña, abre el menú con el botón de arriba a la derecha.</div></li>
     </ol>
-    <a class="btn btn-primary" href="{{ url_for('inicio') }}">
-      Volver al catálogo
-    </a>
+    <p class="page-date mt-3">Actualizado: {{ fecha }}</p>
+    <div class="actions"><a class="btn btn-coral" href="{{ url_for('inicio') }}#catalogo">Ver mascotas <span aria-hidden="true">↗</span></a><a class="btn btn-outline-secondary js-volver" href="{{ url_for('inicio') }}">Volver</a></div>
   </div>
 </section>
 {% endblock %}

@@ -4,7 +4,7 @@
 <section class="login-page">
   <div class="login-decoration"><span class="login-paw">🐾</span><span class="login-heart">♡</span><div><span class="eyebrow">BIENVENIDO A HUELLITAS</span><h1>El amor empieza<br>con una <span>huella.</span></h1><p>Inicia sesión o crea una cuenta para continuar.</p></div></div>
   <div class="login-card">
-    <a class="back-link" href="{{ url_for('inicio') }}">← Volver al inicio</a>
+    <a class="back-link js-volver" href="{{ url_for('inicio') }}">← Volver al inicio</a>
     <div class="login-card-icon">🐶</div><h2>Iniciar sesión</h2><p class="login-subtitle">Ingresa con tu correo y contraseña.</p>
     <form method="POST" action="{{ url_for('login') }}">
       <div class="mb-3"><label for="email" class="form-label">Correo electrónico</label><input type="email" name="email" id="email" class="form-control" placeholder="tu@correo.com" autocomplete="email" required maxlength="150"></div>

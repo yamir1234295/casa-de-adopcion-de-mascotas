@@ -51,7 +51,7 @@
           <div class="pet-card-body">
             <div class="d-flex justify-content-between align-items-start gap-2">
               <div><h3>{{ alumno.nombre }}</h3><p class="pet-species">{{ alumno.categoria }}</p></div>
-              <span class="status-pill {% if alumno.get('estado') == 'Disponible' %}status-available{% elif alumno.get('estado') == 'En proceso' %}status-adopted{% else %}status-adopted{% endif %}">{{ alumno.get('estado', 'Sin asignar') }}</span>
+              <span class="status-pill {% if alumno.get('estado') == 'Disponible' %}status-available{% elif alumno.get('estado') == 'En proceso' %}status-process{% else %}status-adopted{% endif %}">{{ alumno.get('estado', 'Sin asignar') }}</span>
             </div>
             <p class="pet-description">{% if alumno.get('estado') == 'Disponible' %}Está esperando una familia que le dé cariño y cuidados.{% elif alumno.get('estado') == 'En proceso' %}Su solicitud de adopción está en revisión.{% else %}¡Esta mascota ya tiene un hogar!{% endif %}</p>
             <div class="pet-qr">
@@ -80,7 +80,7 @@
         </article>
       </div>
       {% else %}
-      <div class="col-12"><div class="empty-state"><span>🐾</span><h3>¡Aquí empieza una nueva historia!</h3><p>Aún no hay mascotas registradas. Inicia sesión para agregar la primera.</p>{% if puede_gestionar %}<a class="btn btn-coral" href="#registro">Registrar mascota</a>{% endif %}</div></div>
+      <div class="col-12"><div class="empty-state"><span>🐾</span><h3>¡Aquí empieza una nueva historia!</h3><p>Por ahora no hay mascotas disponibles para adopción.</p>{% if puede_gestionar %}<a class="btn btn-coral" href="#registro">Registrar mascota</a>{% endif %}</div></div>
       {% endfor %}
     </div>
   </div>
