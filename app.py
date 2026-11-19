@@ -93,6 +93,26 @@ def usuario_requerido(vista):
     return protegida
 
 
+def destino_seguro(destino):
+    """Solo acepta rutas internas para volver tras iniciar sesión."""
+    if isinstance(destino, str) and destino.startswith("/") and not destino.startswith("//"):
+        return destino
+    return None
+
+
+def sesion_para_adoptar(vista):
+    """Exige cuenta (inicio de sesión o registro) para usar la lista, reservar y solicitar."""
+    @wraps(vista)
+    def protegida(*args, **kwargs):
+        usuario_id = session.get("usuario_id", "")
+        if not ObjectId.is_valid(usuario_id) or not usuarios.find_one({"_id": ObjectId(usuario_id)}, {"_id": 1}):
+            session["volver_tras_login"] = request.full_path.rstrip("?") if request.method == "GET" else url_for("inicio")
+            flash("Inicia sesión o crea una cuenta para agregar mascotas a tu lista, apartarlas y enviar solicitudes de adopción.", "error")
+            return redirect(url_for("login"))
+        return vista(*args, **kwargs)
+    return protegida
+
+
 def administrador_requerido(vista):
     @wraps(vista)
     @usuario_requerido
@@ -117,6 +137,7 @@ def obtener_reserva_id():
     return session["reserva_id"]
 
 @app.route("/reservar/<id>", methods=["POST"])
+@sesion_para_adoptar
 def reservar_mascota(id):
     liberar_reservas_vencidas()
     mascota = buscar_alumno(id)
@@ -154,6 +175,7 @@ def reservar_mascota(id):
 
 
 @app.route("/cancelar-reserva/<id>", methods=["POST"])
+@sesion_para_adoptar
 def cancelar_reserva(id):
     visitante = obtener_reserva_id()
     mascota_id = ObjectId(id) if ObjectId.is_valid(id) else None
@@ -418,19 +440,23 @@ def error_peticion(error):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    siguiente = destino_seguro(request.args.get("next"))
+    if siguiente:
+        session["volver_tras_login"] = siguiente
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         asegurar_admin_configurado()
         usuario = usuarios.find_one({"email": email}) if email else None
         if usuario and check_password_hash(usuario.get("password_hash", ""), password):
+            volver = destino_seguro(session.get("volver_tras_login"))
             session.clear()
             session["usuario_id"] = str(usuario["_id"])
             session["usuario_nombre"] = usuario.get("nombre", "Usuario")
             session["usuario_email"] = usuario["email"]
             session["usuario_rol"] = usuario.get("rol", "usuario")
             flash("Iniciaste sesión correctamente.", "success")
-            return redirect(url_for("inicio"))
+            return redirect(volver or url_for("inicio"))
         flash("Correo o contraseña incorrectos. Si aún no tienes cuenta, créala en esta página.", "error")
     return render_template("login.html")
 
@@ -460,13 +486,14 @@ def registro():
         "fecha_registro": datetime.now().strftime("%d/%m/%Y %H:%M")
     }
     resultado = usuarios.insert_one(usuario)
+    volver = destino_seguro(session.get("volver_tras_login"))
     session.clear()
     session["usuario_id"] = str(resultado.inserted_id)
     session["usuario_nombre"] = nombre
     session["usuario_email"] = email
     session["usuario_rol"] = "usuario"
     flash("Tu cuenta se creó correctamente.", "success")
-    return redirect(url_for("inicio"))
+    return redirect(volver or url_for("inicio"))
 
 
 @app.route("/logout", methods=["POST"])
@@ -477,8 +504,8 @@ def logout():
 
 
 @app.route("/carrito")
+@sesion_para_adoptar
 def carrito():
-    
     return render_template("carrito.html")
 
 
@@ -529,6 +556,7 @@ def solicitudes_lista():
 
 
 @app.route("/solicitudes/agregar", methods=["POST"])
+@sesion_para_adoptar
 def agregar_solicitud():
     import json
     liberar_reservas_vencidas()
