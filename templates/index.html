@@ -58,7 +58,9 @@
               <img src="{{ url_for('imagen_qr', id=alumno._id) }}" alt="Código QR de {{ alumno.nombre }}" loading="lazy">
               <span>Escanea para ver la ficha de {{ alumno.nombre }}</span>
             </div>
-            {% if alumno.get('estado') == 'Disponible' %}
+            {% if alumno.get('estado') == 'Disponible' and not session.get('usuario_id') %}
+            <a class="btn btn-pet w-100" href="{{ url_for('login', next=url_for('inicio') ~ '#catalogo') }}">Inicia sesión para adoptar <span aria-hidden="true">→</span></a>
+            {% elif alumno.get('estado') == 'Disponible' %}
             <button class="btn btn-pet w-100 btn-agregar-carrito" type="button"
                     data-id="{{ alumno._id }}"
                     data-nombre="{{ alumno.nombre }}"

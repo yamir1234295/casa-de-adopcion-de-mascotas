@@ -16,7 +16,9 @@
         <span>Escanea para consultar la ficha de {{ alumno.nombre }}</span>
       </div>
       <div class="d-flex gap-2 flex-wrap mt-4"><a class="btn btn-coral" href="{{ url_for('editar', id=alumno._id) }}">Editar datos y foto</a><a class="btn btn-outline-secondary js-volver" href="{{ url_for('inicio') }}#catalogo">Volver</a></div>
-      {% if alumno.estado == "Disponible" %}
+      {% if alumno.estado == "Disponible" and not session.get('usuario_id') %}
+        <div class="alert alert-info mt-4">Para apartar esta mascota y enviar una solicitud necesitas una cuenta. <a href="{{ url_for('login', next=url_for('ver_mascota', id=alumno._id)) }}"><strong>Inicia sesión o crea tu cuenta</strong></a>.</div>
+      {% elif alumno.estado == "Disponible" %}
         <div class="mt-4" id="reservationPanel" data-mascota-id="{{ alumno._id }}">
           <div id="reservationStatus" class="alert alert-info" style="display:none"></div>
           <div id="reservationActions">
