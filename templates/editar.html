@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
 {% block contenido %}
-<div class="row justify-content-center">
-  <div class="col-lg-8">
-    <section class="card shadow-sm">
-      <div class="card-body p-4">
-        <h2 class="h4 mb-3">Editar mascota</h2>
+<div class="page-wrap container">
+  <div class="page-card">
+    <section>
+      <div>
+        <a class="back-link js-volver" href="{{ url_for('ver_mascota', id=alumno._id) }}">← Volver a la ficha</a>
+        <h1 class="mt-3">Editar <span>{{ alumno.nombre }}</span></h1>
+        <p class="page-lead">Actualiza la información y la foto de la mascota.</p>
         <form method="post" enctype="multipart/form-data"
               action="{{ url_for('editar', id=alumno._id) }}">
           <div class="mb-3">
@@ -18,10 +20,12 @@
                    value="{{ alumno.categoria }}" required maxlength="20">
           </div>
           <div class="mb-3">
-            <label class="form-label">Foto actual</label><br>
-            {% if alumno.get('imagen') %}<img class="edit-photo mb-2" src="{{ url_for('static', filename='uploads/' ~ alumno.imagen) }}" alt="Foto actual de {{ alumno.nombre }}">{% else %}<p class="text-muted small">No hay foto registrada.</p>{% endif %}
-            <label for="imagen" class="form-label d-block">Cambiar foto (opcional)</label>
-            <input type="file" id="imagen" name="imagen" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
+            <label class="form-label">Foto</label>
+            <div class="photo-edit">
+              {% if alumno.get('imagen') %}<img class="edit-photo" src="{{ url_for('static', filename='uploads/' ~ alumno.imagen) }}" alt="Foto actual de {{ alumno.nombre }}">{% endif %}
+              <div>{% if not alumno.get('imagen') %}<p class="text-muted small mb-2">No hay foto registrada.</p>{% endif %}<label for="imagen" class="form-label d-block">Cambiar foto (opcional)</label>
+              <input type="file" id="imagen" name="imagen" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*"></div>
+            </div>
           </div>
           {% if es_admin %}
           <div class="mb-3">
@@ -40,11 +44,11 @@
           </div>
           {% endif %}
           <div class="d-flex gap-2 flex-wrap">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-coral">
               Guardar cambios
             </button>
-            <a class="btn btn-outline-secondary"
-               href="{{ url_for('inicio') }}#lista">Cancelar</a>
+            <a class="btn btn-outline-secondary js-volver"
+               href="{{ url_for('inicio') }}#catalogo">Cancelar</a>
           </div>
         </form>
       </div>

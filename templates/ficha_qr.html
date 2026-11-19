@@ -13,11 +13,7 @@
     <div class="detail-info">
       <span class="eyebrow dark-eyebrow">FICHA PÚBLICA DE HUELLITAS</span>
       <h1>{{ alumno.nombre }}</h1>
-      <p><strong>Especie:</strong> {{ alumno.categoria }}</p>
-      <p><strong>Estado:</strong>
-        {% if reservada %}Reservada temporalmente
-        {% else %}{{ alumno.get('estado', 'Sin asignar') }}{% endif %}
-      </p>
+      <div class="chips"><span class="chip">{{ alumno.categoria }}</span><span class="status-pill {% if reservada %}status-process{% elif alumno.get('estado') == 'Disponible' %}status-available{% elif alumno.get('estado') == 'En proceso' %}status-process{% else %}status-adopted{% endif %}">{% if reservada %}Reservada temporalmente{% else %}{{ alumno.get('estado', 'Sin asignar') }}{% endif %}</span></div>
       <p>Consulta la información pública y actualizada de esta mascota.</p>
       <a class="btn btn-outline-secondary" href="{{ url_for('inicio') }}">Visitar Huellitas</a>
     </div>
