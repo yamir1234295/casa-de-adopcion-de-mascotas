@@ -123,7 +123,7 @@ def administrador_requerido(vista):
     return protegida
 
 
-DURACION_RESERVA_MINUTOS = 5
+DURACION_RESERVA_MINUTOS = 1
 
 
 def ahora_utc():
