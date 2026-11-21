@@ -8,7 +8,7 @@
     <p class="page-lead">Escanea este código con tu celular para consultar la ficha pública de la mascota.</p>
     <div class="qr-frame"><img src="data:image/png;base64,{{ qr }}" alt="Código QR de {{ alumno.nombre }}" class="img-fluid" style="width:260px;max-width:100%"></div>
     <p class="small text-muted mt-3 text-break">{{ direccion }}</p>
-    <div class="actions"><a class="btn btn-coral" href="{{ url_for('ficha_qr', id=alumno._id) }}">Abrir ficha</a><a class="btn btn-outline-secondary js-volver" href="{{ url_for('ver_mascota', id=alumno._id) }}">Regresar</a></div>
+    <div class="actions"><a class="btn btn-coral" href="{{ url_for('ficha_qr', id=alumno._id) }}">Abrir ficha</a><a class="btn btn-outline-secondary" href="{{ url_for('ver_mascota', id=alumno._id) }}">Regresar</a></div>
   </div>
 </section>
 {% endblock %}

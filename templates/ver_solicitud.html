@@ -2,7 +2,7 @@
 {% block titulo %}Detalle de solicitud | Huellitas{% endblock %}
 {% block contenido %}
 <section class="container py-5">
-  {% if session.get('usuario_rol') == 'admin' %}<a class="back-link js-volver" href="{{ url_for('solicitudes_lista') }}">← Volver a solicitudes</a>{% else %}<a class="back-link js-volver" href="{{ url_for('inicio') }}">← Volver al inicio</a>{% endif %}
+  {% if session.get('usuario_rol') == 'admin' %}<a class="back-link" href="{{ url_for('solicitudes_lista') }}">← Volver a solicitudes</a>{% else %}<a class="back-link" href="{{ url_for('inicio') }}">← Volver al inicio</a>{% endif %}
   <div class="request-detail mt-3">
     <div class="d-flex justify-content-between gap-3 flex-wrap align-items-start"><div><span class="eyebrow dark-eyebrow">DETALLE</span><h1>Solicitud de {{ solicitud.nombre_solicitante }}</h1></div><span class="status-pill {% if solicitud.estado == 'Aprobada' %}status-available{% elif solicitud.estado == 'Rechazada' %}status-adopted{% else %}status-process{% endif %}">{{ solicitud.estado }}</span></div>
     <p><strong>Contacto:</strong> {{ solicitud.contacto }}</p><p><strong>Fecha:</strong> {{ solicitud.get('fecha', '—') }}</p>
@@ -11,7 +11,7 @@
       {% for mascota in solicitud.get('mascotas', []) %}
       <div class="col-sm-6 col-lg-4">
         <div class="request-pet h-100">
-          {% if mascota.get('imagen') %}<img src="{{ url_for('static', filename='uploads/' ~ mascota.imagen) }}" alt="Foto de {{ mascota.nombre }}">{% else %}<div class="detail-placeholder small-placeholder">🐾</div>{% endif %}
+          {% if mascota.get('imagen') %}<img src="{{ url_for('foto', nombre=mascota.imagen) }}" alt="Foto de {{ mascota.nombre }}">{% else %}<div class="detail-placeholder small-placeholder">🐾</div>{% endif %}
           <div class="p-3">
             <strong>{{ mascota.nombre }}</strong><p>{{ mascota.categoria }}</p>
             {% if mascota.get('id') %}
@@ -27,7 +27,7 @@
     </div>
     {% if solicitud.get('mensaje') %}<p class="mt-4"><strong>Mensaje:</strong> {{ solicitud.mensaje }}</p>{% endif %}
     {% if session.get('usuario_rol') == 'admin' %}
-    <div class="d-flex gap-2 mt-4 flex-wrap"><a class="btn btn-coral" href="{{ url_for('editar_solicitud', id=solicitud._id) }}">Editar solicitud</a><a class="btn btn-outline-secondary js-volver" href="{{ url_for('solicitudes_lista') }}">Volver a la lista</a></div>
+    <div class="d-flex gap-2 mt-4 flex-wrap"><a class="btn btn-coral" href="{{ url_for('editar_solicitud', id=solicitud._id) }}">Editar solicitud</a><a class="btn btn-outline-secondary" href="{{ url_for('solicitudes_lista') }}">Volver a la lista</a></div>
     {% endif %}
   </div>
 </section>
@@ -36,7 +36,7 @@
 {% block scripts %}
 <script>
 (function () {
-  const ids = {{ ids_confirmados|tojson }};
+  const ids = {{ session.get('carrito_confirmado_ids', [])|tojson }};
   if (window.huellitasCart && ids.length) {
     ids.forEach(id => window.huellitasCart.remove(id));
     sessionStorage.setItem('huellitasSolicitudConfirmada', '1');
