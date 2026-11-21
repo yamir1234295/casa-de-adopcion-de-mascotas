@@ -16,6 +16,7 @@ import uuid
 import io
 import base64
 import qrcode
+from PIL import Image, ImageOps
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "huellitas-clave-local-cambiar")
@@ -42,15 +43,31 @@ TIPOS_IMAGEN = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
 
 
 def guardar_imagen(archivo):
-    """Guarda la foto en MongoDB (GridFS): el disco de Render se borra en cada despliegue."""
+    """Valida, normaliza (JPEG, máx. 1600 px) y guarda la foto en MongoDB (GridFS).
+    El disco de Render se borra en cada despliegue, por eso no se guarda en static/."""
     if not archivo or not archivo.filename:
         return None
     nombre_seguro = secure_filename(archivo.filename)
     extension = nombre_seguro.rsplit(".", 1)[-1].lower() if "." in nombre_seguro else ""
     if extension not in EXTENSIONES_IMAGEN:
         abort(400, description="La imagen debe ser JPG, PNG, GIF o WEBP.")
-    nombre_final = f"{uuid4().hex}.{extension}"
-    fotos.put(archivo.read(), filename=nombre_final, content_type=TIPOS_IMAGEN[extension])
+    try:
+        imagen = Image.open(archivo.stream)
+        imagen = ImageOps.exif_transpose(imagen)      # respeta la rotación de fotos de celular
+        imagen.thumbnail((1600, 1600))
+        if imagen.mode in ("RGBA", "LA", "P"):
+            imagen = imagen.convert("RGBA")
+            fondo = Image.new("RGB", imagen.size, (255, 255, 255))
+            fondo.paste(imagen, mask=imagen.split()[-1])
+            imagen = fondo
+        else:
+            imagen = imagen.convert("RGB")
+        salida = io.BytesIO()
+        imagen.save(salida, format="JPEG", quality=85, optimize=True)
+    except Exception:
+        abort(400, description="La imagen está dañada o no se pudo leer. Prueba con otra foto.")
+    nombre_final = f"{uuid4().hex}.jpg"
+    fotos.put(salida.getvalue(), filename=nombre_final, content_type="image/jpeg")
     return nombre_final
 
 
@@ -64,7 +81,10 @@ def borrar_imagen(nombre):
 def foto(nombre):
     archivo = fotos.find_one({"filename": secure_filename(nombre)})
     if not archivo:
-        abort(404)
+        # La foto ya no existe (p. ej. se perdió del disco antes de migrar): mostrar un recuadro en vez de imagen rota.
+        svg = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="#e4eddd"/>'
+               '<text x="200" y="175" font-size="96" text-anchor="middle">🐾</text></svg>')
+        return Response(svg, mimetype="image/svg+xml", headers={"Cache-Control": "no-cache"})
     respuesta = Response(archivo.read(), mimetype=archivo.content_type or "application/octet-stream")
     respuesta.headers["Cache-Control"] = "public, max-age=86400"
     return respuesta
@@ -122,7 +142,7 @@ def administrador_requerido(vista):
     return protegida
 
 
-DURACION_RESERVA_MINUTOS = 1
+DURACION_RESERVA_MINUTOS = 5
 
 
 def ahora_utc():
@@ -304,7 +324,8 @@ def inicio():
     # la información de todas las mascotas. Solo el administrador cambia estados.
     es_admin = usuario_es_administrador()
     puede_gestionar = bool(session.get("usuario_id"))
-    filtro = {} if puede_gestionar else {"estado": "Disponible"}
+    # Solo el administrador ve las mascotas En proceso/Adoptado; todos los demás (incluso con sesión) solo las Disponibles.
+    filtro = {} if es_admin else {"estado": "Disponible"}
     lista = list(alumnos.find(filtro).sort("nombre", 1))
     return render_template("index.html", alumnos=lista, es_admin=es_admin,
                            puede_gestionar=puede_gestionar)
@@ -326,6 +347,8 @@ def agregar():
 def ver_mascota(id):
     liberar_reservas_vencidas()
     alumno = buscar_alumno(id)
+    if alumno.get("estado", "Disponible") != "Disponible" and not usuario_es_administrador():
+        abort(404, description="Esta mascota ya no está disponible")
     return render_template("ver_mascota.html", alumno=alumno)
 
 
@@ -623,6 +646,25 @@ def agregar_solicitud():
     return redirect(url_for("ver_solicitud", id=str(resultado.inserted_id)))
 
 
+def ids_de_mascotas(solicitud):
+    return [ObjectId(m["id"]) for m in solicitud.get("mascotas", [])
+            if isinstance(m, dict) and ObjectId.is_valid(str(m.get("id", "")))]
+
+
+def liberar_mascotas(solicitud):
+    """Devuelve a Disponible las mascotas En proceso de una solicitud rechazada o eliminada,
+    salvo las que otra solicitud activa (Pendiente, En revisión o Aprobada) siga reteniendo."""
+    for mascota_id in ids_de_mascotas(solicitud):
+        otra = solicitudes.find_one({
+            "_id": {"$ne": solicitud["_id"]},
+            "estado": {"$in": ["Pendiente", "En revisión", "Aprobada"]},
+            "mascotas.id": str(mascota_id)
+        }, {"_id": 1})
+        if not otra:
+            alumnos.update_one({"_id": mascota_id, "estado": "En proceso"},
+                               {"$set": {"estado": "Disponible"}})
+
+
 def buscar_solicitud(id):
     if not ObjectId.is_valid(id):
         abort(404, description="La solicitud no es válida.")
@@ -668,10 +710,7 @@ def editar_solicitud(id):
                     {"$set": {"estado": "Adoptado"}, "$unset": {"reserva": ""}}
                 )
             elif estado == "Rechazada":
-                alumnos.update_many(
-                    {"_id": {"$in": ids_mascotas}, "estado": "En proceso"},
-                    {"$set": {"estado": "Disponible"}}
-                )
+                liberar_mascotas(solicitud)
             elif estado in ["Pendiente", "En revisión"]:
                 alumnos.update_many(
                     {"_id": {"$in": ids_mascotas}, "estado": {"$ne": "Adoptado"}},
@@ -687,12 +726,17 @@ def editar_solicitud(id):
 def eliminar_solicitud(id):
     solicitud = buscar_solicitud(id)
     solicitudes.delete_one({"_id": solicitud["_id"]})
+    if solicitud.get("estado") != "Aprobada":
+        liberar_mascotas(solicitud)   # si se borra una solicitud abierta, la mascota no debe quedar oculta para siempre
     flash("Solicitud eliminada.", "success")
     return redirect(url_for("solicitudes_lista"))
 
 @app.route("/api/mascotas/<id>", methods=["GET", "PUT", "DELETE"])
 def api_mascota(id):
     mascota = buscar_alumno(id)
+    if (request.method == "GET" and mascota.get("estado", "Disponible") != "Disponible"
+            and not usuario_es_administrador()):
+        abort(404, description="Esta mascota ya no está disponible")
     if request.method == "PUT":
         if not session.get("usuario_id"):
             abort(403, description="Inicia sesión para editar mascotas.")
