@@ -57,6 +57,21 @@
 </footer>
 <script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script>
+/* Los botones "Volver/Cancelar" regresan a la página anterior real; si no hay (enlace directo,
+   formulario recién enviado o login), usan su enlace normal como respaldo. */
+document.addEventListener('click', function (e) {
+  var a = e.target.closest && e.target.closest('a[data-volver]');
+  if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button) return;
+  var ref = document.referrer, ok = false;
+  try {
+    var u = new URL(ref);
+    ok = u.origin === location.origin && u.pathname !== location.pathname &&
+         !/^\/(editar|login|registro|solicitudes\/agregar|reservar|cancelar-reserva)/.test(u.pathname);
+  } catch (err) {}
+  if (ok && history.length > 1) { e.preventDefault(); history.back(); }
+});
+</script>
+<script>
 (function () {
   function getCart() {
     try { return JSON.parse(localStorage.getItem('huellitasCart') || '[]'); }

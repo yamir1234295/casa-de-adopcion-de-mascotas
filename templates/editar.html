@@ -4,7 +4,7 @@
   <div class="page-card">
     <section>
       <div>
-        <a class="back-link" href="{{ url_for('ver_mascota', id=alumno._id) }}">← Volver a la ficha</a>
+        <a class="back-link" href="{{ url_for('ver_mascota', id=alumno._id) }}" data-volver>← Volver a la ficha</a>
         <h1 class="mt-3">Editar <span>{{ alumno.nombre }}</span></h1>
         <p class="page-lead">Actualiza la información y la foto de la mascota.</p>
         <form method="post" enctype="multipart/form-data"
@@ -48,7 +48,7 @@
               Guardar cambios
             </button>
             <a class="btn btn-outline-secondary"
-               href="{{ url_for('inicio') }}#catalogo">Cancelar</a>
+               href="{{ url_for('inicio') }}#catalogo" data-volver>Cancelar</a>
           </div>
         </form>
       </div>
