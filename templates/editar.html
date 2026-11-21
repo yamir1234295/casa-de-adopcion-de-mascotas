@@ -4,7 +4,7 @@
   <div class="page-card">
     <section>
       <div>
-        <a class="back-link js-volver" href="{{ url_for('ver_mascota', id=alumno._id) }}">← Volver a la ficha</a>
+        <a class="back-link" href="{{ url_for('ver_mascota', id=alumno._id) }}">← Volver a la ficha</a>
         <h1 class="mt-3">Editar <span>{{ alumno.nombre }}</span></h1>
         <p class="page-lead">Actualiza la información y la foto de la mascota.</p>
         <form method="post" enctype="multipart/form-data"
@@ -22,7 +22,7 @@
           <div class="mb-3">
             <label class="form-label">Foto</label>
             <div class="photo-edit">
-              {% if alumno.get('imagen') %}<img class="edit-photo" src="{{ url_for('static', filename='uploads/' ~ alumno.imagen) }}" alt="Foto actual de {{ alumno.nombre }}">{% endif %}
+              {% if alumno.get('imagen') %}<img class="edit-photo" src="{{ url_for('foto', nombre=alumno.imagen) }}" alt="Foto actual de {{ alumno.nombre }}">{% endif %}
               <div>{% if not alumno.get('imagen') %}<p class="text-muted small mb-2">No hay foto registrada.</p>{% endif %}<label for="imagen" class="form-label d-block">Cambiar foto (opcional)</label>
               <input type="file" id="imagen" name="imagen" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*"></div>
             </div>
@@ -47,7 +47,7 @@
             <button type="submit" class="btn btn-coral">
               Guardar cambios
             </button>
-            <a class="btn btn-outline-secondary js-volver"
+            <a class="btn btn-outline-secondary"
                href="{{ url_for('inicio') }}#catalogo">Cancelar</a>
           </div>
         </form>

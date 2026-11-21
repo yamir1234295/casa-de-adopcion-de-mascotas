@@ -81,13 +81,3 @@ input[type=file].form-control{padding:10px 12px}input[type=file]::file-selector-
 .requests-table .status-pill{margin:0}
 
 @media(max-width:767px){.page-wrap{padding:32px 0 60px}.detail-photo-wrap,.detail-placeholder{min-height:260px}.reserve-toast{right:12px;bottom:12px}.toast-message{bottom:90px}}
-
-/* ===== QR más grande ===== */
-.pet-qr{flex-direction:column;gap:10px;padding:16px;text-align:center}
-.pet-qr img{width:150px;height:150px;padding:8px;border:1px solid var(--line);border-radius:12px}
-.pet-qr span{max-width:none;font-size:.76rem}
-.detail-info .pet-qr{flex-direction:row;align-items:center;gap:18px;text-align:left}
-.detail-info .pet-qr img{width:170px;height:170px}
-.qr-frame img{width:min(320px,100%)!important}
-.request-pet .pet-qr img{width:130px;height:130px}
-@media(max-width:575px){.pet-qr img{width:140px;height:140px}.detail-info .pet-qr{flex-direction:column;text-align:center}.detail-info .pet-qr img{width:150px;height:150px}}

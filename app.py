@@ -1,8 +1,9 @@
 from flask import (Flask, render_template, request, redirect,
-                   url_for, abort, jsonify, flash, session, send_file)
+                   url_for, abort, jsonify, flash, session, send_file, Response)
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 from bson import ObjectId
+import gridfs
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -19,11 +20,29 @@ import qrcode
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "huellitas-clave-local-cambiar")
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
-app.config["UPLOAD_FOLDER"] = os.path.join(app.static_folder, "uploads")
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 EXTENSIONES_IMAGEN = {"png", "jpg", "jpeg", "gif", "webp"}
 
+mongo_uri = os.environ.get("MONGO_URI")
+if not mongo_uri:
+    if os.environ.get("RENDER"):
+        raise RuntimeError("Configura MONGO_URI en Render.")
+    mongo_uri = "mongodb://127.0.0.1:27017/"
+# maxIdleTimeMS evita reutilizar conexiones que Atlas/Render ya cerraron por inactividad.
+cliente = MongoClient(mongo_uri, serverSelectionTimeoutMS=15000, connectTimeoutMS=15000,
+                      maxIdleTimeMS=60000, retryReads=True, retryWrites=True, tz_aware=True)
+base_datos = cliente["casa_adopcion_de_mascotas"]
+alumnos = base_datos["perros"]
+usuarios = base_datos["usuarios"]
+reservas = base_datos["reservas"]
+solicitudes = base_datos["solicitudes"]
+fotos = gridfs.GridFS(base_datos, collection="fotos")
+
+TIPOS_IMAGEN = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+                "gif": "image/gif", "webp": "image/webp"}
+
+
 def guardar_imagen(archivo):
+    """Guarda la foto en MongoDB (GridFS): el disco de Render se borra en cada despliegue."""
     if not archivo or not archivo.filename:
         return None
     nombre_seguro = secure_filename(archivo.filename)
@@ -31,25 +50,25 @@ def guardar_imagen(archivo):
     if extension not in EXTENSIONES_IMAGEN:
         abort(400, description="La imagen debe ser JPG, PNG, GIF o WEBP.")
     nombre_final = f"{uuid4().hex}.{extension}"
-    archivo.save(os.path.join(app.config["UPLOAD_FOLDER"], nombre_final))
+    fotos.put(archivo.read(), filename=nombre_final, content_type=TIPOS_IMAGEN[extension])
     return nombre_final
+
 
 def borrar_imagen(nombre):
     if nombre:
-        ruta = os.path.join(app.config["UPLOAD_FOLDER"], secure_filename(nombre))
-        if os.path.isfile(ruta):
-            os.remove(ruta)
-mongo_uri = os.environ.get("MONGO_URI")
-if not mongo_uri:
-    if os.environ.get("RENDER"):
-        raise RuntimeError("Configura MONGO_URI en Render.")
-    mongo_uri = "mongodb://127.0.0.1:27017/"
-cliente = MongoClient(mongo_uri, serverSelectionTimeoutMS=10000, tz_aware=True)
-base_datos = cliente["casa_adopcion_de_mascotas"]
-alumnos = base_datos["perros"]
-usuarios = base_datos["usuarios"]
-reservas = base_datos["reservas"]
-solicitudes = base_datos["solicitudes"]
+        for archivo in fotos.find({"filename": secure_filename(nombre)}):
+            fotos.delete(archivo._id)
+
+
+@app.route("/foto/<nombre>")
+def foto(nombre):
+    archivo = fotos.find_one({"filename": secure_filename(nombre)})
+    if not archivo:
+        abort(404)
+    respuesta = Response(archivo.read(), mimetype=archivo.content_type or "application/octet-stream")
+    respuesta.headers["Cache-Control"] = "public, max-age=86400"
+    return respuesta
+
 
 
 def asegurar_admin_configurado():
@@ -93,26 +112,6 @@ def usuario_requerido(vista):
     return protegida
 
 
-def destino_seguro(destino):
-    """Solo acepta rutas internas para volver tras iniciar sesión."""
-    if isinstance(destino, str) and destino.startswith("/") and not destino.startswith("//"):
-        return destino
-    return None
-
-
-def sesion_para_adoptar(vista):
-    """Exige cuenta (inicio de sesión o registro) para usar la lista, reservar y solicitar."""
-    @wraps(vista)
-    def protegida(*args, **kwargs):
-        usuario_id = session.get("usuario_id", "")
-        if not ObjectId.is_valid(usuario_id) or not usuarios.find_one({"_id": ObjectId(usuario_id)}, {"_id": 1}):
-            session["volver_tras_login"] = request.full_path.rstrip("?") if request.method == "GET" else url_for("inicio")
-            flash("Inicia sesión o crea una cuenta para agregar mascotas a tu lista, apartarlas y enviar solicitudes de adopción.", "error")
-            return redirect(url_for("login"))
-        return vista(*args, **kwargs)
-    return protegida
-
-
 def administrador_requerido(vista):
     @wraps(vista)
     @usuario_requerido
@@ -137,7 +136,6 @@ def obtener_reserva_id():
     return session["reserva_id"]
 
 @app.route("/reservar/<id>", methods=["POST"])
-@sesion_para_adoptar
 def reservar_mascota(id):
     liberar_reservas_vencidas()
     mascota = buscar_alumno(id)
@@ -175,7 +173,6 @@ def reservar_mascota(id):
 
 
 @app.route("/cancelar-reserva/<id>", methods=["POST"])
-@sesion_para_adoptar
 def cancelar_reserva(id):
     visitante = obtener_reserva_id()
     mascota_id = ObjectId(id) if ObjectId.is_valid(id) else None
@@ -307,8 +304,7 @@ def inicio():
     # la información de todas las mascotas. Solo el administrador cambia estados.
     es_admin = usuario_es_administrador()
     puede_gestionar = bool(session.get("usuario_id"))
-    # Solo el administrador ve las mascotas en proceso o adoptadas.
-    filtro = {} if es_admin else {"estado": "Disponible"}
+    filtro = {} if puede_gestionar else {"estado": "Disponible"}
     lista = list(alumnos.find(filtro).sort("nombre", 1))
     return render_template("index.html", alumnos=lista, es_admin=es_admin,
                            puede_gestionar=puede_gestionar)
@@ -412,8 +408,20 @@ def eliminar(id):
     return redirect(url_for("inicio"))
 
 
+@app.route("/salud")
+def salud():
+    """Abre /salud en el navegador para ver si la base responde (y el error real si no)."""
+    try:
+        cliente.admin.command("ping")
+        return jsonify({"base_de_datos": "ok"})
+    except PyMongoError as error:
+        app.logger.error("Ping a MongoDB falló: %s", error)
+        return jsonify({"base_de_datos": "error", "detalle": str(error)[:300]}), 503
+
+
 @app.errorhandler(PyMongoError)
 def error_mongo(error):
+    app.logger.error("Error de MongoDB: %s: %s", type(error).__name__, error)
     mensaje = "No fue posible conectar con la base de datos."
     if request.path.startswith("/api/"):
         return jsonify({"error": mensaje}), 503
@@ -440,23 +448,19 @@ def error_peticion(error):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    siguiente = destino_seguro(request.args.get("next"))
-    if siguiente:
-        session["volver_tras_login"] = siguiente
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         asegurar_admin_configurado()
         usuario = usuarios.find_one({"email": email}) if email else None
         if usuario and check_password_hash(usuario.get("password_hash", ""), password):
-            volver = destino_seguro(session.get("volver_tras_login"))
             session.clear()
             session["usuario_id"] = str(usuario["_id"])
             session["usuario_nombre"] = usuario.get("nombre", "Usuario")
             session["usuario_email"] = usuario["email"]
             session["usuario_rol"] = usuario.get("rol", "usuario")
             flash("Iniciaste sesión correctamente.", "success")
-            return redirect(volver or url_for("inicio"))
+            return redirect(url_for("inicio"))
         flash("Correo o contraseña incorrectos. Si aún no tienes cuenta, créala en esta página.", "error")
     return render_template("login.html")
 
@@ -486,14 +490,13 @@ def registro():
         "fecha_registro": datetime.now().strftime("%d/%m/%Y %H:%M")
     }
     resultado = usuarios.insert_one(usuario)
-    volver = destino_seguro(session.get("volver_tras_login"))
     session.clear()
     session["usuario_id"] = str(resultado.inserted_id)
     session["usuario_nombre"] = nombre
     session["usuario_email"] = email
     session["usuario_rol"] = "usuario"
     flash("Tu cuenta se creó correctamente.", "success")
-    return redirect(volver or url_for("inicio"))
+    return redirect(url_for("inicio"))
 
 
 @app.route("/logout", methods=["POST"])
@@ -504,8 +507,8 @@ def logout():
 
 
 @app.route("/carrito")
-@sesion_para_adoptar
 def carrito():
+    
     return render_template("carrito.html")
 
 
@@ -556,7 +559,6 @@ def solicitudes_lista():
 
 
 @app.route("/solicitudes/agregar", methods=["POST"])
-@sesion_para_adoptar
 def agregar_solicitud():
     import json
     liberar_reservas_vencidas()
@@ -633,8 +635,7 @@ def buscar_solicitud(id):
 @app.route("/solicitudes/<id>")
 def ver_solicitud(id):
     solicitud = buscar_solicitud(id)
-    ids_confirmados = session.pop("carrito_confirmado_ids", [])
-    return render_template("ver_solicitud.html", solicitud=solicitud, ids_confirmados=ids_confirmados)
+    return render_template("ver_solicitud.html", solicitud=solicitud)
 
 
 @app.route("/solicitudes/<id>/editar", methods=["GET", "POST"])

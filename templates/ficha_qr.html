@@ -5,7 +5,7 @@
   <div class="detail-card mt-3">
     <div class="detail-photo-wrap">
       {% if alumno.get('imagen') %}
-        <img class="detail-photo" src="{{ url_for('static', filename='uploads/' ~ alumno.imagen) }}" alt="Foto de {{ alumno.nombre }}">
+        <img class="detail-photo" src="{{ url_for('foto', nombre=alumno.imagen) }}" alt="Foto de {{ alumno.nombre }}">
       {% else %}
         <div class="detail-placeholder">{% if 'gato' in alumno.categoria|lower %}🐱{% elif 'conejo' in alumno.categoria|lower %}🐰{% elif 'perro' in alumno.categoria|lower %}🐶{% else %}🐾{% endif %}</div>
       {% endif %}

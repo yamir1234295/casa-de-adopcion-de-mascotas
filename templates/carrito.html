@@ -36,7 +36,7 @@ function renderCart() {
   area.innerHTML = cart.map(function(pet) {
     var safeName = String(pet.nombre).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
     var safeCat = String(pet.categoria).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
-    var picture = pet.imagen ? '<img class="cart-pet-photo" src="/static/uploads/'+encodeURIComponent(pet.imagen)+'" alt="Foto de '+safeName+'">' : '<div class="cart-pet-icon">🐾</div>';
+    var picture = pet.imagen ? '<img class="cart-pet-photo" src="/foto/'+encodeURIComponent(pet.imagen)+'" alt="Foto de '+safeName+'">' : '<div class="cart-pet-icon">🐾</div>';
     return '<article class="cart-item">'+picture+'<div class="cart-pet-info"><h3>'+safeName+'</h3><p>'+safeCat+' · Solicitud de interés</p><a href="/mascota/'+encodeURIComponent(pet.id)+'">Ver ficha y apartar 5 min</a></div><button class="remove-button" type="button" data-remove-id="'+encodeURIComponent(pet.id)+'">Quitar</button></article>';
   }).join('');
 }
