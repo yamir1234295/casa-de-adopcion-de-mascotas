@@ -2,7 +2,7 @@
 {% block titulo %}{{ alumno.nombre }} | Huellitas{% endblock %}
 {% block contenido %}
 <section class="container py-5">
-  <a class="back-link" href="{{ url_for('inicio') }}#catalogo">← Volver al catálogo</a>
+  <a class="back-link" href="{{ url_for('inicio') }}#catalogo" data-volver>← Volver al catálogo</a>
   <div class="detail-card mt-3">
     <div class="detail-photo-wrap">
       {% if alumno.get('imagen') %}<img class="detail-photo" src="{{ url_for('foto', nombre=alumno.imagen) }}" alt="Foto de {{ alumno.nombre }}">
@@ -15,7 +15,7 @@
         <img src="{{ url_for('imagen_qr', id=alumno._id) }}" alt="Código QR de {{ alumno.nombre }}" loading="lazy">
         <span>Escanea para consultar la ficha de {{ alumno.nombre }}</span>
       </div>
-      <div class="d-flex gap-2 flex-wrap mt-4"><a class="btn btn-coral" href="{{ url_for('editar', id=alumno._id) }}">Editar datos y foto</a><a class="btn btn-outline-secondary" href="{{ url_for('inicio') }}#catalogo">Volver</a></div>
+      <div class="d-flex gap-2 flex-wrap mt-4"><a class="btn btn-coral" href="{{ url_for('editar', id=alumno._id) }}">Editar datos y foto</a><a class="btn btn-outline-secondary" href="{{ url_for('inicio') }}#catalogo" data-volver>Volver</a></div>
       {% if alumno.estado == "Disponible" %}
         <div class="mt-4" id="reservationPanel" data-mascota-id="{{ alumno._id }}">
           <div id="reservationStatus" class="alert alert-info" style="display:none"></div>
