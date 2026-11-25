@@ -7,6 +7,7 @@
   <aside class="cart-summary">
     <h2>Enviar solicitud</h2>
     <p>Déjanos tus datos para registrar tu interés. Antes de enviar, entra en cada ficha y aparta la mascota durante 5 minutos.</p>
+    {% if not session.get('usuario_id') %}<div class="alert alert-warning">Para enviar tu solicitud necesitas <a href="{{ url_for('login') }}?next={{ url_for('carrito')|urlencode }}">iniciar sesión</a>.</div>{% endif %}
     <form id="requestForm" method="POST" action="{{ url_for('agregar_solicitud') }}" class="row g-3">
       <div class="col-12"><label class="form-label" for="nombre_solicitante">Tu nombre</label><input class="form-control" id="nombre_solicitante" name="nombre_solicitante" required maxlength="100"></div>
       <div class="col-12"><label class="form-label" for="contacto">Teléfono o correo</label><input class="form-control" id="contacto" name="contacto" required maxlength="120" placeholder="¿Cómo podemos contactarte?"></div>

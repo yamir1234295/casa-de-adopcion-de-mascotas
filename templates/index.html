@@ -60,6 +60,7 @@
             </div>
             {% if alumno.get('estado') == 'Disponible' %}
             <button class="btn btn-pet w-100 btn-agregar-carrito" type="button"
+                    data-sesion="{{ '1' if session.get('usuario_id') else '0' }}"
                     data-id="{{ alumno._id }}"
                     data-nombre="{{ alumno.nombre }}"
                     data-categoria="{{ alumno.categoria }}"
@@ -111,6 +112,10 @@
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('.btn-agregar-carrito').forEach(function (boton) {
     boton.addEventListener('click', function () {
+      if (boton.dataset.sesion !== '1') {
+        window.location.href = "{{ url_for('login') }}?aviso=1&next=" + encodeURIComponent('/#catalogo');
+        return;
+      }
       try {
         if (!window.huellitasCart || typeof window.huellitasCart.add !== 'function') {
           alert('No se pudo cargar el carrito. Recarga la página e inténtalo otra vez.');
