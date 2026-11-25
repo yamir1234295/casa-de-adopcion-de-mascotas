@@ -156,6 +156,7 @@ def obtener_reserva_id():
     return session["reserva_id"]
 
 @app.route("/reservar/<id>", methods=["POST"])
+@usuario_requerido
 def reservar_mascota(id):
     liberar_reservas_vencidas()
     mascota = buscar_alumno(id)
@@ -471,6 +472,11 @@ def error_peticion(error):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    destino = request.values.get("next", "")
+    if not (destino.startswith("/") and not destino.startswith("//")):
+        destino = ""
+    if request.method == "GET" and request.args.get("aviso"):
+        flash("Inicia sesión para agregar mascotas a tu lista.", "error")
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
@@ -483,9 +489,9 @@ def login():
             session["usuario_email"] = usuario["email"]
             session["usuario_rol"] = usuario.get("rol", "usuario")
             flash("Iniciaste sesión correctamente.", "success")
-            return redirect(url_for("inicio"))
+            return redirect(destino or url_for("inicio"))
         flash("Correo o contraseña incorrectos. Si aún no tienes cuenta, créala en esta página.", "error")
-    return render_template("login.html")
+    return render_template("login.html", destino=destino)
 
 
 @app.route("/registro", methods=["POST"])
@@ -582,6 +588,7 @@ def solicitudes_lista():
 
 
 @app.route("/solicitudes/agregar", methods=["POST"])
+@usuario_requerido
 def agregar_solicitud():
     import json
     liberar_reservas_vencidas()

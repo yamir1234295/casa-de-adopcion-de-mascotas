@@ -20,9 +20,13 @@
         <div class="mt-4" id="reservationPanel" data-mascota-id="{{ alumno._id }}">
           <div id="reservationStatus" class="alert alert-info" style="display:none"></div>
           <div id="reservationActions">
+            {% if session.get('usuario_id') %}
             <form method="POST" action="{{ url_for('reservar_mascota', id=alumno._id) }}">
               <button type="submit" class="btn btn-coral">Apartar mascota por 5 minutos</button>
             </form>
+            {% else %}
+            <a class="btn btn-coral" href="{{ url_for('login') }}?aviso=1&next={{ url_for('ver_mascota', id=alumno._id)|urlencode }}">Inicia sesión para apartar esta mascota</a>
+            {% endif %}
           </div>
         </div>
       {% elif alumno.estado == "En proceso" %}
